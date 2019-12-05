@@ -1,0 +1,27 @@
+"
+
+A. Experimental Results on the Yale Database
+The Yale face database4 was constructed at the Center for
+Computational Vision and Control at Yale University. There
+are 165 grayscale images of 15 subjects (each individual
+having 11 different images). The images include variations
+in lighting conditions (right-light, center-light, and left-light),
+facial expression (normal, sleepy, surprised, happy, sad, and
+wink), and with/without glasses. All images were cropped and
+
+resized to 32×32 pixels. We preprocessed the data by normal-
+izing each face vector to the unit. Fig. 2 shows sample images
+
+of one person.
+Table III shows the average recognition rates of each method
+and their corresponding standard deviations (std), where the
+best results are highlighted in bold. There is no result for
+“2 Train” of NFP since NFP requires that the number of the
+training examples per class should be at least three. These
+experimental results are also shown in Fig. 3. Due to space
+limitations, we only present the NN, NC, NFS, linear SVM,
+and DVM curves in Fig. 3. As can be seen, DVM outperforms
+all other methods in all cases, while the NN method has the
+poorest performance except “9 Train” and “10 Train.”
+
+"
