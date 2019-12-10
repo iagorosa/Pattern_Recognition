@@ -1,80 +1,49 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 21 14:10:33 2019
+Created on Tue Dec 10 12:32:31 2019
 
 @author: iagorosa
 """
+
 #%%
 import numpy as np
 from PIL import Image as pil
 #import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
-from sklearn_extensions.extreme_learning_machines.elm import ELMRegressor, ELMClassifier
+from sklearn_extensions.extreme_learning_machines.elm import ELMRegressor, ELMClassifier 
 
-#%% 
-
-#LEITURA DE TODOS OS ARQUIVOS DA PASTA
-def name_files(mypath):
-
-    arqs = [f for f in listdir(mypath) if ( isfile(join(mypath, f)) and f not in arq_ignore ) ]
-
-    return arqs
-
-# FUNCAO DE PRODUTO DAS DIMENSOES DA IMAGEM
-def prod(x):
-    return x[0] * x[1]
-
+from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
+        
 #%%
 
-path = 'yalefaces/'
-arq_ignore = ['Readme.txt']
+X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
+# col 0: pessoa
+# col 1: label
 
-arqs = name_files(path)  # LEITURA DAS IMAGENS
+#scaler = MinMaxScaler()
+scaler = MaxAbsScaler()
 
-arr = []  # INICIALIZACAO DO VETOR DAS IMAGENS
-rot = []  # INFORMACAO DAS PESSOAS E LABEL
+X_ = scaler.fit_transform(X[:, 2:].T) 
 
-# CRIACAO DO VETOR COM TODAS AS IMAGENS
-for i, arq in enumerate(arqs):
+X[:, 2:] = X_.T 
 
-    img = pil.open('./'+path+arq)
-    aux_arr = np.array(img, dtype='int')
-    aux_arr = aux_arr.reshape((1, prod(aux_arr.shape)))[0]
-
-    if i == 0:
-        print(aux_arr.shape)
-
-#    arr.append([aux_arr[:10].tolist(), *arq.split('.')])
-    arr.append(aux_arr.tolist())
-    rot.append([*arq.split('.')])
-    
 #%%
+y = X[:, 1]
 
-#arr = np.array(arr)
-#class_dict = dict(zip(np.unique(arr[:,2]), range(len(np.unique(arr[:,2])))))
-rot = np.array(rot)
-class_dict = dict(zip(np.unique(rot[:,1]), range(len(np.unique(rot[:,1])))))
 
-print('Quantidade de rotulos:', len(np.unique(rot[:,1])))
-print('Quantidade de pessoas:', len(np.unique(rot[:,0])))
-
-X = np.array(arr) # TRANSFORMANDO VETOR DAS IMAGENS EM ARRAY
-y = rot[:, 1]     # PEGANDO APENAS OS LABELS 
-
-y = np.vectorize(class_dict.get)(y)  # TRANSFORMANDO LABELS EM NUMEROS
-
-#a = ELMRegressor()
-#a.fit(X, y)
-
-v = -11
+v = 1
 clsf = ELMClassifier()
-clsf.fit(X[:v], y[:v])
+#clsf.fit(X[:v, 2:], y[:v])
+clsf.fit(X[X[:, 0] == v][2:], X[X[:, 0] == v][:, 1])
 
 print()
 
-print(clsf.predict(X[v:]))
+print(clsf.predict(X[v:, 2:]))
+
+#print()
+
 print(y[v:])
 
-print('Socore:', clsf.score(X[v:], y[v:]))
+print('Score:', clsf.score(X[v:, 2:], y[v:]))
