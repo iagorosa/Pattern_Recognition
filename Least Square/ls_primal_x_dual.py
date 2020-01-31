@@ -2,7 +2,7 @@
 """
 Created on Wed Jan  8 01:59:54 2020
 
-@author: ia
+@author: iagorosa
 """
 #%matplotlib inline
 import pandas as pd
@@ -12,6 +12,13 @@ import statsmodels.api as sm
 from sklearn.model_selection import train_test_split 
 from scipy import stats
 from sklearn.preprocessing import MinMaxScaler
+from sklearn_extensions.extreme_learning_machines.elm import ELMRegressor
+
+import scipy.stats as scs
+from statsmodels.stats.diagnostic import lilliefors
+import pylab as pl
+import seaborn as sns
+
 #%%
 dados=pd.read_csv('housing.csv',sep=',',header=0)
 dados.head()
@@ -24,23 +31,100 @@ y=dados['LSTAT']
 z=dados['MEDV']
 w=dados['PTRATIO']
 
+D= pd.DataFrame(dados.describe())
+D.loc['skewness', :] = scs.skew(dados)
+D.loc['kurtosis', :] = scs.kurtosis(dados, fisher=False)
+
+D.to_csv('describe.csv')
+
 #%%
-#####diagramas de dispersao da variavel(y) dependente com as demais indepe
-plt.scatter(z,x,color='b')
-plt.title('MEDV vs RM')
-plt.xlabel('RM')
-plt.ylabel('MEDV')
-plt.show()
-plt.scatter(z,y,color='red')
-plt.title('MEDV vs LSTAT')
-plt.xlabel('LSTAT')
-plt.ylabel('MEDV')
-plt.show()
-plt.scatter(z,w,color='orange')
-plt.title('MEDV vs PTRATIO')
-plt.xlabel('PTRATIO')
-plt.ylabel('MEDV')
-plt.show()
+
+pl.figure(figsize=(10,8))
+sns.heatmap(dados.corr(), linewidths=.5, annot=True)
+pl.title("Matrix de Correlação")
+pl.savefig("matriz_correlacao.png")
+pl.close()
+
+g = sns.pairplot(dados)
+g.fig.suptitle('Pairplot dos Dados')
+pl.savefig("paiplot.png")
+pl.close()
+
+#%%
+
+pl.figure(figsize=(10,8))
+dados.iloc[:, :-1].boxplot()
+pl.grid(axis='x')
+pl.title("Boxplot dos Dados")
+pl.savefig('boxplot.png')
+pl.show()
+pl.close()
+
+#%%
+
+for i in range(len(dados.columns[:-1])):
+
+    pl.figure(figsize=(10,8))
+    Y = dados.iloc[:, i]
+    Y.hist(histtype='bar', density=True, ec='black', zorder=2)
+    
+    min_ = int(round(Y.min()-0.5))
+    max_ = int(round(Y.max()+0.5))
+    
+    pl.xticks(range(min_, max_, round((max_-min_)/10+0.5)))
+    
+    pl.xlabel(Y.name)
+    pl.ylabel("Frequência Relativa (%)")
+    
+    pl.title("Histograma " + Y.name)
+    pl.grid(axis='x')
+    
+    # estatistica
+    mu, std = scs.norm.fit(Y)
+    
+    # Plot the PDF.
+    xmin, xmax = pl.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = scs.norm.pdf(x, mu, std)
+    pl.plot(x, p, 'r--', linewidth=2)
+    
+    print(mu, std)
+    print(x)
+    
+    # Teste de hipotese de normalidade com 5% de significancia:
+    # H0: A amostra provem de uma população normal
+    # H1: A amostra nao provem de uma distribuicao normal
+    
+    # Testes de shapiro e lillefors: 
+    s   = scs.shapiro(Y)
+    lil = lilliefors(Y)
+    
+    ymin, ymax = pl.ylim()
+    pl.text(xmin+xmin*0.01, ymax-ymax*0.12, 'Shapiro: '+str(round(s[1], 5) )+'\nLilliefors: '+str(round(lil[1], 5)), bbox=dict(facecolor='red', alpha=0.4), zorder=4 )
+    pl.tight_layout()
+    pl.savefig('teste_hipotese_'+Y.name+'.png')
+    pl.show()
+    pl.close()
+    
+pl.figure(figsize=(10,8))
+Y = dados.iloc[:, -1]
+Y.hist(histtype='bar', density=True, ec='black', zorder=2)
+
+min_ = int(round(Y.min()-0.5))
+max_ = int(round(Y.max()+0.5))
+
+pl.xticks(range(min_, max_, round((max_-min_)/10+0.5)))
+
+pl.xlabel(Y.name)
+pl.ylabel("Frequência Relativa (%)")
+
+pl.title("Histograma " + Y.name)
+pl.grid(axis='x')
+pl.tight_layout()
+pl.savefig("histograma_"+Y.name+".png")
+pl.show()
+pl.close()
+
 
 #%%
 ######estudo de normalidade da variavel resposta
@@ -88,7 +172,12 @@ d = y_treino.to_numpy() # transforma df y_treino em numpy array
 X_t = X_teste.to_numpy() # transforma df X_teste em numpy array
 y_t = y_teste.to_numpy() # transforma df y_teste em numpy array
 
-A, d, X_t, y_t = padronizacao_dados(A, d, X_t, y_t, tipo = 'minmax')
+tipo = 'minmax' # tipo de padronização 
+                # use None para nenhuma padronização
+                
+porcentagem = False # se True, calculo da diferenca entre y - ŷ em porcentagem
+
+A, d, X_t, y_t = padronizacao_dados(A, d, X_t, y_t, tipo = tipo)
 
 mse = lambda x: sum( x ** 2 ) / (2 * len (x)) # funcao para o caluculo do mse
                                               # que recebe como argumento o vetor das diferencas
@@ -114,14 +203,24 @@ y_pred = X_t @ w_.T + w[-1]
 # diferenca y - ŷ em porcentagem
 res = (y_t - y_pred)
 
+if porcentagem == True:
+    res = res / y_t
+
 print(mse(res))
 
 #%%
 
 # Grafico comparativo y_teste e y_pred
-plt.figure(figsize=(10,8))
-plt.plot(range(len(y_t)), y_t, 'bo')
-plt.plot(range(len(y_pred)), y_pred, 'rx')
+plt.figure(figsize=(12,8))
+plt.plot(range(len(y_t)), y_t, 'bo', label='y')
+plt.plot(range(len(y_pred)), y_pred, 'rx', label='ŷ')
+pl.legend(fontsize=12)
+pl.title('y x ŷ', fontsize=20)
+pl.xlabel("observação", fontsize=14)
+pl.ylabel("valor", fontsize=14)
+pl.tight_layout()
+pl.savefig("predicao_linear.png", dpi=200)
+pl.close()
 
 #%%
 
@@ -148,7 +247,7 @@ A_ = A[:, :-1] # retira a coluna do bias
 K = A_ @ A_.T
 n = len(K)
 I = np.identity(len(K)) # identidade
-lbd = 1
+lbd = 2
 
 # calculo de alpha = (K + lambda*I) . y
 alpha = np.linalg.inv( K + lbd * I ) @ d 
@@ -159,6 +258,9 @@ y_pred_dual = ls_dual(X_t, alpha)
 # diferenca y - ŷ em porcentagem
 res_dual = (y_t - y_pred_dual)
 
+if porcentagem == None:
+    res_dual = res_dual / y_t
+
 print(mse(res_dual))
 
 #%%
@@ -167,14 +269,16 @@ plt.figure(figsize=(10,8))
 plt.plot(range(len(y_t)), y_t, 'bo')
 plt.plot(range(len(y_pred)), y_pred_dual, 'rx')
 
+
 #%%
 
 ### LS DUAL COM REGLARIZACAO - repeticao
 
 
-lbd = [1, 8] # intervalo de valores de lambda
+lbd = [1, 9] # intervalo de valores de lambda
 y_pred_dual = {} # dicionario de resultados de y_pred com ls dual
 res_dual = {} # dicionario de resultados a diferenca percentual de y - ŷ
+mse_dual = []
 
 for i in range(*lbd):
 
@@ -184,58 +288,103 @@ for i in range(*lbd):
     
     res_dual[i] = (y_t - y_pred_dual[i]) 
     
-    print("lambda="+str(i)+":", mse(res_dual[i]))
+    mse_dual.append(mse(res_dual[i]))
+    
+    print("lambda="+str(i)+":", mse_dual)
     
 #%%
     
-plt.figure(figsize=(10,8))
-plt.plot(range(len(y_t)), y_t, 'bo')
-plt.plot(range(len(y_pred_dual[2])), y_pred_dual[2], 'rx')
+plt.figure(figsize=(12,8))
+pl.plot(range(*lbd), mse_dual, 'o', markersize=12)
+pl.title('MSE em relação ao valor de $\lambda$', fontsize=20)
+pl.xlabel("$\lambda$", fontsize=14)
+pl.ylabel("MSE", fontsize=14)
+pl.xticks(fontsize=12)
+pl.yticks(fontsize=12)
+pl.grid()
+pl.tight_layout()
+pl.savefig("variacao_MSE_dual.png", dpi=200)
+    
+#%%
+    
+plt.figure(figsize=(12,8))
+plt.plot(range(len(y_t)), y_t, 'bo', label='y')
+plt.plot(range(len(y_pred_dual[2])), y_pred_dual[2], 'rx', label='ŷ')
+pl.legend(fontsize=12)
+pl.title('y x ŷ ($\lambda = 2$)', fontsize=20)
+pl.xlabel("observação", fontsize=14)
+pl.ylabel("valor", fontsize=14)
+pl.tight_layout()
+pl.savefig("predicao_nao_linear_dual.png", dpi=200)
 
 
 #%%
-'''
+
+###ELM regressao########
+
+#t=np.array(X_treino['x'])
+#print(t)
+#elm=ELMRegressor(activation_func='sigmoid',alpha=0.1,n_hidden=2,regressor=None)
+
+n_hidden = [10, 110]
+activation_func = ['gaussian', 'sigmoid']
+
+df_elm = pd.DataFrame(columns=activation_func)
+
+for n in range(*n_hidden, 1):
+    for af in activation_func:
+
+        elm = ELMRegressor(n_hidden = n, activation_func=af)
+        #ELMRegressor()
+        
+        elm.fit(A_, d)
+        
+        y_pred_elm = elm.predict(X_t)
+        
+        elm.score(A_, d)
+        
+        res_elm = (y_t - y_pred_elm)
+        
+        df_elm.loc[n, af] = mse(res_elm)
+        
+        print(mse(res_elm))
+
+df_elm.to_csv('df_elm.csv')
 #%%
-######construindo o modelo de regressao com ls forma fechada
-#reg = sm.OLS(y_treino,X_const,data=df).fit()
-reg = sm.OLS(y_treino,X_treino.iloc[:, :-1], data=X_treino.iloc[:, :-1]).fit()
 
-print(reg.summary())
+elm = ELMRegressor(n_hidden = 10, activation_func='gaussian')
+elm.fit(A_, d)
+y_pred_elm = elm.predict(X_t)
+        
 
-#%%
-##### avaliacao do modelo
-yhat=reg.predict(X_teste)
-res=y_teste-yhat
-res
-plt.hist(res,bins=40)
-
-
-
-#%%
-
-####homocedasticidade
-plt.scatter(res,yhat,color='red')
-plt.title('residuos vs valores preditos')
-plt.xlabel('valores preditos')
-plt.ylabel('Residuos')
-plt.show()
+plt.figure(figsize=(12,8))
+plt.plot(range(len(y_t)), y_t, 'bo', label = 'y')
+plt.plot(range(len(y_pred_elm)), y_pred_elm, 'rx', label = 'ŷ')
+pl.legend(fontsize=12)
+pl.title('y x ŷ (n_hidden = 10 e activation_func = Gaussian)', fontsize=20)
+pl.xlabel("observação", fontsize=14)
+pl.ylabel("valor", fontsize=14)
+pl.tight_layout()
+pl.savefig("predicao_elm.png", dpi=200)
 
 
 #%%
-coefs = pd.DataFrame(reg.params)
-coefs.columns = ['Coeficientes']
-print(coefs)
+
+plt.figure(figsize=(12,8))
+df1 = df_elm[df_elm.iloc[:, 0] < 100]
+pl.plot(df1.index, df1.iloc[:, 0], 'bo', markersize=12, label=df_elm.columns[0])
+df2 = df_elm[df_elm.iloc[:, 1] < 100]
+pl.plot(df2.index, df2.iloc[:, 1], 'ro', markersize=12, label=df_elm.columns[1])
+pl.legend()
+pl.title('MSE em Relação a Quantidade de Nós na Camada Interna', fontsize=20)
+pl.xlabel("n_hidden", fontsize=14)
+pl.ylabel("MSE", fontsize=14)
+pl.xticks(fontsize=12)
+pl.yticks(fontsize=12)
+pl.grid()
+pl.tight_layout()
+pl.savefig("variacao_MSE_elm.png", dpi=200)
+pl.show()
+pl.close()
 
 #%%
-######## Implementacao dual do ls#########
-#v=np.transpose(X_const).dot(X_const) #### produto interno
-v= A.T @ A
-v.head()
-w=np.linalg.inv(v)
-print(w)
-t=w.dot(np.transpose(X_const))
-print(t)
-beta=t.dot(y_treino)
-print(beta)
-
-'''
