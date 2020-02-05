@@ -162,15 +162,15 @@ def padronizacao_dados(X_treino, y_treino, X_teste, y_teste, tipo = None):
 
 #%%
 
-## DEFINICOESh
+## DEFINICOES
 
 X_treino.loc[:, 'const'] = 1.0 # adiciona o bias no treinamento
 
-A = X_treino.to_numpy() # transforma df X_treino em numpy array
-d = y_treino.to_numpy() # transforma df y_treino em numpy array
+A  = X_treino.to_numpy(copy=True) # transforma df X_treino em numpy array
+d  = y_treino.to_numpy(copy=True) # transforma df y_treino em numpy array
 
-X_t = X_teste.to_numpy() # transforma df X_teste em numpy array
-y_t = y_teste.to_numpy() # transforma df y_teste em numpy array
+X_t = X_teste.to_numpy(copy=True) # transforma df X_teste em numpy array
+y_t = y_teste.to_numpy(copy=True) # transforma df y_teste em numpy array
 
 tipo = 'minmax' # tipo de padronização 
                 # use None para nenhuma padronização
@@ -271,10 +271,13 @@ print(mse(res_dual))
 K = A @ A.T
 n = len(K)
 I = np.identity(len(K)) # identidade
-lbd = 0
+lbd = 0.1
+# forma de fazer sem bias
 
 # calculo de alpha = (K + lambda*I) . y
-alpha = np.linalg.inv( K + lbd * I ) @ d 
+#alpha = np.linalg.inv( K ** degree + lbd * I ) @ d 
+alpha = np.linalg.solve( K + lbd * I , d) 
+
 
 w_dual = alpha @ A  # deve ser igual ao w do dual
 
@@ -284,6 +287,37 @@ res_dual = (y_t - y_pred_dual)
 
 mse(res_dual)
 
+#%%
+
+# forma de fazer com bias
+
+X_t_bias = np.concatenate([X_t, np.ones((len(X_t),1))], axis=1)
+
+mat = A @ X_t_bias.T
+
+y_pred_dual_bias = alpha @ mat
+
+res_dual_bias = (y_t - y_pred_dual_bias)
+
+mse(res_dual_bias)
+
+# %%
+
+# forma de fazer com bias - não linear
+
+degree = 4
+
+alpha = np.linalg.solve( K ** degree + lbd * I , d) 
+
+X_t_bias = np.concatenate([X_t, np.ones((len(X_t),1))], axis=1)
+
+mat_nl = A @ X_t_bias.T
+
+y_pred_dual_nl = alpha @ mat_nl ** degree
+
+res_dual_nl = (y_t - y_pred_dual_nl)
+
+mse(res_dual_nl)
 
 #%%
 
@@ -296,33 +330,47 @@ plt.plot(range(len(y_pred)), y_pred_dual, 'rx')
 
 ### LS DUAL COM REGLARIZACAO - repeticao
 
+degrees = [1, 7]
+X_t_bias = np.concatenate([X_t, np.ones((len(X_t),1))], axis=1)
 
-lbd = [1, 9] # intervalo de valores de lambda
-y_pred_dual = {} # dicionario de resultados de y_pred com ls dual
-res_dual = {} # dicionario de resultados a diferenca percentual de y - ŷ
+dt = 0.05
+lambdas = [0+dt, 10+dt, dt] # intervalo de valores de lambda
+y_pred_dual = [] # dicionario de resultados de y_pred com ls dual
+res_dual = [] # dicionario de resultados a diferenca percentual de y - ŷ
 mse_dual = []
 
-for i in range(*lbd):
+for degree in range(*degrees):
+    y_pred_dual.append((degree, {}))
+    res_dual.append((degree, {}))
+    mse_dual.append((degree, []))
 
-    alpha = np.linalg.inv( K + i * I ) @ d
+    for lbd in np.arange(*lambdas):
     
-    y_pred_dual[i] = ls_dual(X_t, alpha)
-    
-    res_dual[i] = (y_t - y_pred_dual[i]) 
-    
-    mse_dual.append(mse(res_dual[i]))
-    
-    print("lambda="+str(i)+":", mse_dual)
+        alpha = np.linalg.solve( K ** degree + lbd * I , d) 
+        
+        mat_nl = A @ X_t_bias.T
+        
+        y_pred_dual[-1][1][i] = alpha @ mat ** degree
+        
+        res_dual[-1][1][i] = (y_t - y_pred_dual[-1][1][i]) 
+        
+        mse_dual[-1][1].append(mse(res_dual[-1][1][i]))
+        
+        print("lambda="+str(lbd)+":", mse_dual[-1][1][-1])
     
 #%%
     
 plt.figure(figsize=(12,8))
-pl.plot(range(*lbd), mse_dual, 'o', markersize=12)
+
+for i in range(len(mse_dual)):
+    pl.plot(np.arange(*lambdas), mse_dual[i][1], 'o', markersize=2, label=mse_dual[i][0])
+
 pl.title('MSE em relação ao valor de $\lambda$', fontsize=20)
 pl.xlabel("$\lambda$", fontsize=14)
 pl.ylabel("MSE", fontsize=14)
 pl.xticks(fontsize=12)
 pl.yticks(fontsize=12)
+pl.legend()
 pl.grid()
 pl.tight_layout()
 pl.savefig("variacao_MSE_dual.png", dpi=200)
@@ -359,11 +407,11 @@ for n in range(*n_hidden, 1):
         elm = ELMRegressor(n_hidden = n, activation_func=af)
         #ELMRegressor()
         
-        elm.fit(A_, d)
+        elm.fit(A, d)
         
         y_pred_elm = elm.predict(X_t)
         
-        elm.score(A_, d)
+        elm.score(A, d)
         
         res_elm = (y_t - y_pred_elm)
         
@@ -375,7 +423,7 @@ df_elm.to_csv('df_elm.csv')
 #%%
 
 elm = ELMRegressor(n_hidden = 10, activation_func='gaussian')
-elm.fit(A_, d)
+elm.fit(A, d)
 y_pred_elm = elm.predict(X_t)
         
 
