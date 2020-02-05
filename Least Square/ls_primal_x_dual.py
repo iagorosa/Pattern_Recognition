@@ -242,12 +242,15 @@ def ls_dual(X, alpha):
 
 ### LS DUAL COM REGLARIZACAO - valor unico
 
+'''
 # definicoes
-A_ = A[:, :-1] # retira a coluna do bias 
-K = A_ @ A_.T
+#A_ = A[:, :-1] # retira a coluna do bias 
+#K = A_ @ A_.T
+    
+K = A @ A.T
 n = len(K)
 I = np.identity(len(K)) # identidade
-lbd = 2
+lbd = 0
 
 # calculo de alpha = (K + lambda*I) . y
 alpha = np.linalg.inv( K + lbd * I ) @ d 
@@ -262,6 +265,25 @@ if porcentagem == None:
     res_dual = res_dual / y_t
 
 print(mse(res_dual))
+
+'''
+
+K = A @ A.T
+n = len(K)
+I = np.identity(len(K)) # identidade
+lbd = 0
+
+# calculo de alpha = (K + lambda*I) . y
+alpha = np.linalg.inv( K + lbd * I ) @ d 
+
+w_dual = alpha @ A  # deve ser igual ao w do dual
+
+y_pred_dual = X_t @ w_dual[:-1].T + w_dual[-1]
+
+res_dual = (y_t - y_pred_dual)
+
+mse(res_dual)
+
 
 #%%
 
