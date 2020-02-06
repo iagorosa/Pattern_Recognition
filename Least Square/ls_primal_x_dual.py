@@ -228,45 +228,8 @@ pl.close()
 LS DUAL COM REGULARIZACAO
 '''
 
-# funcao para caluclar o somatorio de alpha * <x_i, x_j> para cada nova observacao
-def ls_dual(X, alpha):
-    y_pred = []
-    for x in X:
-        norma = (x @ x.T) 
-        y_ = sum( norma * alpha) 
-        y_pred.append(y_ / len(alpha)) # apenas divide por len(alpha) para ficar em porcentagem
-    
-    return y_pred
-
-#%%
-
 ### LS DUAL COM REGLARIZACAO - valor unico
 
-'''
-# definicoes
-#A_ = A[:, :-1] # retira a coluna do bias 
-#K = A_ @ A_.T
-    
-K = A @ A.T
-n = len(K)
-I = np.identity(len(K)) # identidade
-lbd = 0
-
-# calculo de alpha = (K + lambda*I) . y
-alpha = np.linalg.inv( K + lbd * I ) @ d 
-
-# valores de y predito pelo ls dual calculado na funcao ls_dual()
-y_pred_dual = ls_dual(X_t, alpha)
-
-# diferenca y - ŷ em porcentagem
-res_dual = (y_t - y_pred_dual)
-
-if porcentagem == None:
-    res_dual = res_dual / y_t
-
-print(mse(res_dual))
-
-'''
 
 K = A @ A.T
 n = len(K)
@@ -330,33 +293,49 @@ plt.plot(range(len(y_pred)), y_pred_dual, 'rx')
 
 ### LS DUAL COM REGLARIZACAO - repeticao
 
-degrees = [1, 7]
-X_t_bias = np.concatenate([X_t, np.ones((len(X_t),1))], axis=1)
 
-dt = 0.05
-lambdas = [0+dt, 10+dt, dt] # intervalo de valores de lambda
-y_pred_dual = [] # dicionario de resultados de y_pred com ls dual
-res_dual = [] # dicionario de resultados a diferenca percentual de y - ŷ
-mse_dual = []
-
-for degree in range(*degrees):
-    y_pred_dual.append((degree, {}))
-    res_dual.append((degree, {}))
-    mse_dual.append((degree, []))
-
-    for lbd in np.arange(*lambdas):
+def ls_dual(X_t, degrees: list, dt: float, lambda_ini_fim: list, pnt = False):
     
-        alpha = np.linalg.solve( K ** degree + lbd * I , d) 
+    K = A @ A.T
+    I = np.identity(len(K))
+    
+#    degrees = [1, 7]
+    X_t_bias = np.concatenate([X_t, np.ones((len(X_t),1))], axis=1)
+    
+#    dt = 0.05
+    lambdas = [lambda_ini_fim[0]+dt, lambda_ini_fim[1]+dt, dt] # intervalo de valores de lambda
+    y_pred_dual = [] # dicionario de resultados de y_pred com ls dual
+    res_dual = [] # dicionario de resultados a diferenca percentual de y - ŷ
+    mse_dual = []
+    
+    for degree in range(*degrees):
+        y_pred_dual.append((degree, {}))
+        res_dual.append((degree, {}))
+        mse_dual.append((degree, []))
+    
+        for lbd in np.arange(*lambdas):
         
-        mat_nl = A @ X_t_bias.T
+            alpha = np.linalg.solve( K ** degree + lbd * I , d) 
+            
+            mat_nl = A @ X_t_bias.T
+            
+            y_pred_dual[-1][1][lbd] = alpha @ mat_nl ** degree
+            
+            res_dual[-1][1][lbd] = (y_t - y_pred_dual[-1][1][lbd]) 
+            
+            mse_dual[-1][1].append(mse(res_dual[-1][1][lbd]))
+            
+            if pnt:
+            print("lambda="+str(lbd)+":", mse_dual[-1][1][-1])
         
-        y_pred_dual[-1][1][i] = alpha @ mat ** degree
-        
-        res_dual[-1][1][i] = (y_t - y_pred_dual[-1][1][i]) 
-        
-        mse_dual[-1][1].append(mse(res_dual[-1][1][i]))
-        
-        print("lambda="+str(lbd)+":", mse_dual[-1][1][-1])
+    return lambdas, y_pred_dual, res_dual, mse_dual
+
+degrees = [1, 7]
+dt = 0.05
+lambda_ini_fim = [0, 10]
+
+
+ls_dual(X_t, degrees, dt, lambda_ini_fim)
     
 #%%
     
@@ -370,7 +349,7 @@ pl.xlabel("$\lambda$", fontsize=14)
 pl.ylabel("MSE", fontsize=14)
 pl.xticks(fontsize=12)
 pl.yticks(fontsize=12)
-pl.legend()
+pl.legend(title='Grau', fontsize=12)
 pl.grid()
 pl.tight_layout()
 pl.savefig("variacao_MSE_dual.png", dpi=200)
