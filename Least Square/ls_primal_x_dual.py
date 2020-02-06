@@ -210,6 +210,18 @@ print(mse(res))
 
 #%%
 
+plt.figure(figsize=(12,8))
+plt.plot(range(len(res)), res, 'bo', label='y')
+pl.title('Diferença entre y e ŷ', fontsize=20)
+pl.xlabel("observação", fontsize=14)
+pl.ylabel("y - ŷ", fontsize=14)
+pl.tight_layout()
+pl.savefig("diferenca_linear.png", dpi=200)
+pl.close()
+
+
+#%%
+
 # Grafico comparativo y_teste e y_pred
 plt.figure(figsize=(12,8))
 plt.plot(range(len(y_t)), y_t, 'bo', label='y')
@@ -312,6 +324,8 @@ def ls_dual(X_t, degrees: list, dt: float, lambda_ini_fim: list, pnt = False):
         y_pred_dual.append((degree, {}))
         res_dual.append((degree, {}))
         mse_dual.append((degree, []))
+        
+        print("Grau", degree)  
     
         for lbd in np.arange(*lambdas):
         
@@ -326,16 +340,16 @@ def ls_dual(X_t, degrees: list, dt: float, lambda_ini_fim: list, pnt = False):
             mse_dual[-1][1].append(mse(res_dual[-1][1][lbd]))
             
             if pnt:
-            print("lambda="+str(lbd)+":", mse_dual[-1][1][-1])
+                print("lambda="+str(lbd)+":", mse_dual[-1][1][-1])  
         
     return lambdas, y_pred_dual, res_dual, mse_dual
 
 degrees = [1, 7]
-dt = 0.05
-lambda_ini_fim = [0, 10]
+dt = 0.1
+lambda_ini_fim = [0.5, 0.6]
 
 
-ls_dual(X_t, degrees, dt, lambda_ini_fim)
+lambdas, y_pred_dual, res_dual, mse_dual = ls_dual(X_t, degrees, dt, lambda_ini_fim)
     
 #%%
     
@@ -355,16 +369,29 @@ pl.tight_layout()
 pl.savefig("variacao_MSE_dual.png", dpi=200)
     
 #%%
+
+ypp = y_pred_dual[1][1][0.6000000000000001]
     
 plt.figure(figsize=(12,8))
 plt.plot(range(len(y_t)), y_t, 'bo', label='y')
-plt.plot(range(len(y_pred_dual[2])), y_pred_dual[2], 'rx', label='ŷ')
+plt.plot(range(len(ypp)), ypp, 'rx', label='ŷ')
 pl.legend(fontsize=12)
-pl.title('y x ŷ ($\lambda = 2$)', fontsize=20)
+pl.title('y x ŷ ($\lambda = 0.60$ e Grau = 2) - MSE= '+str(round(min(mse_dual[1][1]), 5)), fontsize=20)
 pl.xlabel("observação", fontsize=14)
 pl.ylabel("valor", fontsize=14)
 pl.tight_layout()
 pl.savefig("predicao_nao_linear_dual.png", dpi=200)
+
+#%%
+
+plt.figure(figsize=(12,8))
+plt.plot(range(len(res_dual[1][1][0.6])), res_dual[1][1][0.6], 'bo', label='y')
+pl.title('Diferença entre y e ŷ', fontsize=20)
+pl.xlabel("observação", fontsize=14)
+pl.ylabel("y - ŷ", fontsize=14)
+pl.tight_layout()
+pl.savefig("diferenca_dual.png", dpi=200)
+pl.close()
 
 
 #%%
