@@ -36,7 +36,7 @@ labels = {
 #person = np.array(list(range(1, 16))*11).reshape(165,1)
 person = np.array([int(i//len(labels)+1) for i in range(len(m))]).reshape(165, 1)
 label = np.array(list(labels.values())*15).reshape(165,1)
-mm = np.concatenate([person, label, m], axis=1)
+mm = np.concatenate([person, label, m], axis=1).astype('uint8')
 
 
 #m2 = zip(m, list(range(1, 16))*11, list(labels.values())*15)
@@ -44,9 +44,9 @@ mm = np.concatenate([person, label, m], axis=1)
 #m4 = pd.DataFrame(m3)
 
 
-np.savetxt("Yale_32x32.csv", mm, header='person,label', comments = '', delimiter=',', fmt="%d") #salva imagens em um csv
-
-
+np.savetxt("Yale_32x32.csv", mm, header='person,label', comments = '', delimiter=',', fmt="%8u") #salva imagens em um csv
+#, fmt="%d"
+#%%
 # Caso queira visualizar qualquer imagem do vetor, descomente abaixo. Mude a posicao de m[] para uma imagem diferentes.
 '''
 for i in range(11):
@@ -54,4 +54,14 @@ for i in range(11):
 #    m0 = m[i].reshape(32,32).T
     img = pil.fromarray(m0, 'L')
     img.show()
-'''
+'''    
+#%%
+''' 
+for i in range(11):
+    m0 = mm[10+i*11, 2:].reshape(32,32).T
+#    m0 = m[i].reshape(32,32).T
+    img = pil.fromarray(m0, 'L')
+    img.show()
+''' 
+    
+#%%
