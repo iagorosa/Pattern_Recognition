@@ -76,6 +76,7 @@ y_train = X[X[:, 0] != v][:,  1]
 X_test  = X[X[:, 0] == v][:, 2:]
 y_test  = X[X[:, 0] == v][:,  1]
 
+y_train_real = y_train.copy()
 
 #%%
 #### ELM DEFINIDO PELO SKLEARN  
@@ -110,8 +111,8 @@ def relu(a):
     return np.maximum(a, 0, a) 
 
 def input_to_hidden(x, W, B, bias = True): # produto pesos de entrada com neuronios de pesos aleatorios + função de ativação
-    B_mat = np.tile(B, (x.shape[0], 1)) # repete a linha varias vezes
     if bias:
+        B_mat = np.tile(B, (x.shape[0], 1)) # repete a linha varias vezes
         a = np.dot(x, W) + B_mat
     else:
         a = np.dot(x, W) 
@@ -167,7 +168,7 @@ W = weight_func(X_train, Wuni, HIDDEN_UNITS)
 
 #%%
 
-bias = False
+bias = True
 
 H = input_to_hidden(X_train, W, B, bias)
 Ht = np.transpose(H)
@@ -245,11 +246,12 @@ total = y.shape[0]
 r_test = []
 for i in range(total):
     predicted = np.argmax(y[i])
-    test = np.argmax(y_test[i])
-    r_test.append(test)
+#    test = np.argmax(y_test[i])
+    test = y_test[i]
+    r_test.append(predicted)
     correct = correct + (1 if predicted == test else 0)
 print('Accuracy: {:f}'.format(correct/total))
-
+print(r_test)
 
 
 #%%
