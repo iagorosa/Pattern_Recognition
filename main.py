@@ -15,6 +15,10 @@ from os.path import isfile, join
 from sklearn_extensions.extreme_learning_machines.elm import ELMRegressor, ELMClassifier 
 
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
+
+import ClassELM as elm
+import aux_functions as af
+
         
 #%%
 
@@ -143,7 +147,7 @@ except:
 INPUT_LENGHT = X_train.shape[1] # 784 
 HIDDEN_UNITS = 100
 
-W = np.random.normal(size=[INPUT_LENGHT, HIDDEN_UNITS])
+W = np.random.normal(size=[INPUT_LENGHT, HIDDEN_UNITS],)
 print('Input Weight shape: {shape}'.format(shape=W.shape))
 
 B = np.random.normal(size=[HIDDEN_UNITS]) #Bias
@@ -168,7 +172,7 @@ W = weight_func(X_train, Wuni, HIDDEN_UNITS)
 
 #%%
 
-bias = True
+bias = False
 
 H = input_to_hidden(X_train, W, B, bias)
 Ht = np.transpose(H)
@@ -198,12 +202,12 @@ print(r_test)
 #%%
 
 def inverse_ReLU(x):
-    x = np.where(x > 0, x, 0)
-    pos = np.where(x < 0, 1, 0)
+    xx = np.where(x > 0, x, 0)
+    pos = np.where(x <= 0, 1, 0)
     rand = np.random.uniform(-1, 0, size=x.shape)    
     aux = pos * rand
     
-    return pos, rand, aux + x
+    return pos, rand, aux + xx
 
 
 ##### MULTICAMADAS
@@ -256,8 +260,21 @@ print(r_test)
 
 #%%
 
+celm = elm.ELMClassifier(bias=True, activation_func='sigmoid', func_hidden_layer = af.normal_random_layer)
 
 
+celm.fit(X_train, y_train)
+
+celm.predict(X_test, y_test)
 
 
+#%%
 
+cmelm = elm.ELMMLPClassifier(bias=True, activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=50)
+
+
+cmelm.fit(X_train, y_train)
+
+cmelm.predict(X_test, y_test)
+
+#%%
