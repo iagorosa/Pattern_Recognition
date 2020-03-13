@@ -29,7 +29,7 @@ class BaseELM():
         self.bias = bias
         
     def create_random_layer(self):
-        return self.func_hidden_layer(self.input_lenght, self.n_hidden, self.random_state)
+        return self.func_hidden_layer(self.input_lenght, self.n_hidden, self.random_state, self.n_classes)
     
     def create_bias(self):
         return np.random.normal(size=[self.n_hidden])
@@ -47,6 +47,8 @@ class BaseELM():
         
         self.input_lenght = X.shape[1]
         self.y_bin = self.binarizer.fit_transform(y)  
+        
+        self.n_classes = self.y_bin.shape[1]
         
         self.W = self.create_random_layer()
         if self.bias:
@@ -90,7 +92,7 @@ class BaseELM():
     
 
 class ELMMLPClassifier(BaseELM):
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias=True):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None):
         
         super(ELMMLPClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=True)
         
@@ -109,12 +111,12 @@ class ELMMLPClassifier(BaseELM):
         
         Whe = np.dot(np.linalg.pinv(self.He), H1_inv)
         
-        self.Wh = Whe[:-1, :]
+        self.W1 = Whe[:-1, :]
         self.B1  = Whe[-1, :]
         
         #TODO: melhorar essa parte. Colocar os calculos de H2 (input_to_hidden) em uma nova funcao?
         B1_mat = np.tile(self.B1, (self.H.shape[0], 1))
-        self.H2 = af.f_activation(np.dot(self.H, self.Wh) + B1_mat, self.activation_func)
+        self.H2 = af.f_activation(np.dot(self.H, self.W1) + B1_mat, self.activation_func)
         self.beta2 = np.dot(np.linalg.pinv(self.H2), y)
         
         return self.beta2
@@ -125,11 +127,11 @@ class ELMMLPClassifier(BaseELM):
         B1_mat = np.tile(self.B1, (X.shape[0], 1))
         B_mat  = np.tile(self.B, (X.shape[0], 1))
 
-        print(B_mat.shape, X.shape, self.W.shape)
-        p1 = af.f_activation(np.dot(X, self.W)  + B_mat, self.activation_func)
-        p2 = af.f_activation(np.dot(p1, self.Wh) + B1_mat, self.activation_func)
+#        print(B_mat.shape, X.shape, self.W.shape)
+        f1 = af.f_activation( (np.dot(X,  self.W)  + B_mat), self.activation_func)
+        f2 = af.f_activation( (np.dot(f1, self.W1) + B1_mat), self.activation_func)
         
-        y_pred = np.dot(p2, self.beta2)
+        y_pred = np.dot(f2, self.beta2)
         
         return super(ELMMLPClassifier, self).predict(y, y_pred)
         

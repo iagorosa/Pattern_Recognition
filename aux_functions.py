@@ -9,19 +9,19 @@ Created on Tue Mar 10 09:48:57 2020
 import numpy as np
 import scipy as sc
 
-def normal_random_layer(input_leght, n_hidden, random_state=None):
+def normal_random_layer(input_leght, n_hidden, random_state=None, n_classes=None):
     
     np.random.seed(random_state)
     
     return np.random.normal(size=[input_leght, n_hidden])
 
-def uniform_random_layer(input_leght, n_hidden, random_state=None):
+def uniform_random_layer(input_leght, n_hidden, random_state=None, n_classes=None):
     
     np.random.seed(random_state)
     
-    return np.random.uniform(size=[input_leght, n_hidden])
+    return np.random.uniform(-1, 1, size=[input_leght, n_hidden])
 
-def SCAWI(input_leght, n_hidden, n_classes, random_state=None):
+def SCAWI(input_leght, n_hidden, random_state=None, n_classes=None):
 
     np.random.seed(random_state)
     
@@ -31,12 +31,13 @@ def SCAWI(input_leght, n_hidden, n_classes, random_state=None):
         np.random.seed(random_state+105)
         
     r = np.random.uniform(-1, 1, size=(input_leght, n_hidden))
+
     v = np.sum(W**2) / n_classes
     const = ( 1.3 / (np.sqrt(1 + input_leght*v**2)) ) 
-
+    
     return const * r
 
-def nguyanatal(input_leght, n_hidden, random_state=None):
+def nguyanatal(input_leght, n_hidden, random_state=None, n_classes=None):
     
     np.random.seed(random_state)
     
