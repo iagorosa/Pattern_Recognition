@@ -260,7 +260,7 @@ print(r_test)
 
 #%%
 
-celm = elm.ELMClassifier(bias=True, activation_func='sigmoid', func_hidden_layer = af.normal_random_layer)
+celm = elm.ELMClassifier(bias=True, activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=20)
 
 
 celm.fit(X_train, y_train)
@@ -270,7 +270,7 @@ celm.predict(X_test, y_test)
 
 #%%
 
-cmelm = elm.ELMMLPClassifier(bias=True, activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=50)
+cmelm = elm.ELMMLPClassifier(bias=True, activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=20)
 
 
 cmelm.fit(X_train, y_train)

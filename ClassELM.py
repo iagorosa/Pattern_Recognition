@@ -46,7 +46,7 @@ class BaseELM():
     def fit(self, X, y):
         
         self.input_lenght = X.shape[1]
-        y_bin = self.binarizer.fit_transform(y)  
+        self.y_bin = self.binarizer.fit_transform(y)  
         
         self.W = self.create_random_layer()
         if self.bias:
@@ -55,7 +55,7 @@ class BaseELM():
         self.H = self.input_to_hidden(X)
         Ht = self.H.T
         
-        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, y_bin))
+        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, self.y_bin))
         
         return self.beta
         
@@ -102,7 +102,7 @@ class ELMMLPClassifier(BaseELM):
 #        self.H = self._get_H()
         super(ELMMLPClassifier, self).fit(X, y)
         
-        self.H1 = np.dot(y, np.linalg.pinv(self.beta)) 
+        self.H1 = np.dot(self.y_bin, np.linalg.pinv(self.beta)) 
         self.He = np.concatenate([self.H, np.ones(self.H.shape[0]).reshape(-1, 1)], axis=1)
         
         H1_inv = af.af_inverse(X, self.activation_func) 
@@ -115,7 +115,6 @@ class ELMMLPClassifier(BaseELM):
         #TODO: melhorar essa parte. Colocar os calculos de H2 (input_to_hidden) em uma nova funcao?
         B1_mat = np.tile(self.B1, (self.H.shape[0], 1))
         self.H2 = af.f_activation(np.dot(self.H, self.Wh) + B1_mat, self.activation_func)
-        print(self.H)
         self.beta2 = np.dot(np.linalg.pinv(self.H2), y)
         
         return self.beta2
@@ -124,10 +123,11 @@ class ELMMLPClassifier(BaseELM):
     def predict(self, X, y):
 
         B1_mat = np.tile(self.B1, (X.shape[0], 1))
-        B_mat = np.tile(self.B1, (X.shape[0], 1))
+        B_mat  = np.tile(self.B, (X.shape[0], 1))
 
+        print(B_mat.shape, X.shape, self.W.shape)
         p1 = af.f_activation(np.dot(X, self.W)  + B_mat, self.activation_func)
-        p2 = af.f_activation(np.dot(p1, self.W) + B1_mat, self.activation_func)
+        p2 = af.f_activation(np.dot(p1, self.Wh) + B1_mat, self.activation_func)
         
         y_pred = np.dot(p2, self.beta2)
         
