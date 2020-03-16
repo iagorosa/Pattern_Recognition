@@ -58,7 +58,7 @@ X_tt = XX.merge(X_t, on = [0, 1] ,how='left')
 
 #%%
 
-random_state = 10
+random_state = None
 
 n_person  = len(np.unique(X[:, 0])) 
 n_classes = len(np.unique(X[:, 1])) 
@@ -117,8 +117,8 @@ print(comb)
 
 
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, bias=True, random_state=None)
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=None)
+celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, bias=True, random_state=None)
+cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=None)
 
 results = [[[], []], [[], []]]
 
@@ -168,7 +168,7 @@ celm.predict(X_test, y_test)
 
 #%%
 
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=20)
+cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=None)
 
 
 cmelm.fit(X_train, y_train)

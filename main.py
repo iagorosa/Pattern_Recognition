@@ -35,12 +35,14 @@ X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
 #    img = pil.fromarray(m0, 'L')
 #    img.show()
     
+'''
 for x in X[X[:, 1] == 8]:
 #    m0 = X[10+i*11, 2:].reshape(32,32).T
     m0 = x[2:].reshape(32,32).T
     img = pil.fromarray(m0, 'L')
     img.show()
-    
+'''
+
 '''
 labels = {
          'centerlight':  0,
@@ -147,7 +149,7 @@ except:
 INPUT_LENGHT = X_train.shape[1] # 784 
 HIDDEN_UNITS = 20
 
-np.random.seed(20)
+#np.random.seed(20)
 
 W = np.random.normal(size=[INPUT_LENGHT, HIDDEN_UNITS],)
 print('Input Weight shape: {shape}'.format(shape=W.shape))
@@ -262,7 +264,7 @@ print(r_test)
 
 #%%
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.SCAWI, bias=True, random_state=20)
+celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, bias=True, random_state=10)
 
 
 celm.fit(X_train, y_train)
@@ -272,7 +274,7 @@ celm.predict(X_test, y_test)
 
 #%%
 
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=20)
+cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=10)
 
 
 cmelm.fit(X_train, y_train)

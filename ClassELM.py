@@ -117,7 +117,7 @@ class ELMMLPClassifier(BaseELM):
         #TODO: melhorar essa parte. Colocar os calculos de H2 (input_to_hidden) em uma nova funcao?
         B1_mat = np.tile(self.B1, (self.H.shape[0], 1))
         self.H2 = af.f_activation(np.dot(self.H, self.W1) + B1_mat, self.activation_func)
-        self.beta2 = np.dot(np.linalg.pinv(self.H2), y)
+        self.beta2 = np.dot(np.linalg.pinv(self.H2), self.y_bin)
         
         return self.beta2
           

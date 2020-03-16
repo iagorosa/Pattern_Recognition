@@ -52,6 +52,8 @@ def f_activation(x, activaction_func):
     if activaction_func == 'relu':
         return np.maximum(x, 0, x) 
     if activaction_func == 'tanh':
+        print(x)
+        print(x.max(), x.min())
         return np.tanh(x)
     if activaction_func == 'sigmoid':
         return sc.special.expit(x)
@@ -68,6 +70,6 @@ def af_inverse(x, activaction_func):
     if activaction_func == 'relu':
         return inverse_ReLU(x)
     if activaction_func == 'tanh':
-        return np.arctanhh(x)
+        return np.arctanh(x)
     if activaction_func == 'sigmoid':
         return sc.special.logit(x)
