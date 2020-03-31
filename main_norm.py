@@ -8,6 +8,7 @@ Created on Fri Mar 13 12:27:16 2020
 
 #%%
 import numpy as np
+import pandas as pd
 from PIL import Image as pil
 #import matplotlib.pyplot as plt
 from os import listdir
@@ -33,45 +34,28 @@ X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
 
 X[:, 2:] = X[:, 2:] / 255.0
 
-#%%
-
-v = 1
-
-X_train = X[X[:, 0] != v][:, 2:]
-y_train = X[X[:, 0] != v][:,  1]
-
-X_test  = X[X[:, 0] == v][:, 2:]
-y_test  = X[X[:, 0] == v][:,  1]
-
-y_train_real = y_train.copy()
-
-#%%
-import pandas as pd
-
-X_train = X[X[:, 0] != v]
-
-X_t = pd.DataFrame(X_train)
-XX = pd.DataFrame(X)
-
-X_tt = XX.merge(X_t, on = [0, 1] ,how='left')
-
 
 #%%
 
+#Teste
+#random_state = None
+#
+#n_person  = len(np.unique(X[:, 0])) 
+#n_classes = len(np.unique(X[:, 1])) 
+#
+#np.random.seed(random_state)
+#v = np.arange(n_classes)
+#
+#np.random.shuffle(v)
+#print(v)
+#
+#np.random.shuffle(v)
+#print(v)
+#%%
 random_state = None
-
 n_person  = len(np.unique(X[:, 0])) 
 n_classes = len(np.unique(X[:, 1])) 
 
-np.random.seed(random_state)
-v = np.arange(n_classes)
-
-np.random.shuffle(v)
-print(v)
-
-np.random.shuffle(v)
-print(v)
-#%%
 np.random.seed(random_state)
 
 v = np.arange(1, n_person+1)
@@ -93,7 +77,6 @@ X_train = CV_random_matrix[:, :5]
 
 #np.delete(CV_random_matrix, 1, 0)
 X_folds = []
-k = 0
 
 for i in range(int(n_person/k_fold)):
 #    X_new.append([])
@@ -117,12 +100,12 @@ print(comb)
 
 
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, bias=True, random_state=None)
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=None)
+celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.nguyanatal, bias=True, random_state=None)
+cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.nguyanatal, random_state=None)
 
 results = [[[], []], [[], []]]
 
-for i in range(3):
+for i in range(X_folds.shape[0]):
     
     val = list(range(int(n_person/k_fold)))
     val.remove(i)
@@ -134,7 +117,7 @@ for i in range(3):
     y_test  = X_test[:, 1]
     
     X_train = X_train[:, 2:]
-    X_test = X_test[:, 2:]
+    X_test  = X_test[:, 2:]
 
     celm.fit(X_train, y_train)
     r1 = celm.predict(X_test, y_test)
