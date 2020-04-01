@@ -52,9 +52,13 @@ def f_activation(x, activaction_func):
     if activaction_func == 'relu':
         return np.maximum(x, 0, x) 
     if activaction_func == 'tanh':
+        print('velho')
         print(x)
         print(x.max(), x.min())
-        return np.tanh(x)
+        x = np.tanh(x)
+        print('novo:\n')
+        print(x)
+        return x
     if activaction_func == 'sigmoid':
         return sc.special.expit(x)
     

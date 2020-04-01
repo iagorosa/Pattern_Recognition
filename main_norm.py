@@ -36,22 +36,6 @@ X[:, 2:] = X[:, 2:] / 255.0
 
 
 #%%
-
-#Teste
-#random_state = None
-#
-#n_person  = len(np.unique(X[:, 0])) 
-#n_classes = len(np.unique(X[:, 1])) 
-#
-#np.random.seed(random_state)
-#v = np.arange(n_classes)
-#
-#np.random.shuffle(v)
-#print(v)
-#
-#np.random.shuffle(v)
-#print(v)
-#%%
 random_state = None
 n_person  = len(np.unique(X[:, 0])) 
 n_classes = len(np.unique(X[:, 1])) 
@@ -100,8 +84,8 @@ print(comb)
 
 
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.nguyanatal, bias=True, random_state=None)
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.nguyanatal, random_state=None)
+celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, bias=True, random_state=10)
+cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=10)
 
 results = [[[], []], [[], []]]
 
@@ -140,18 +124,25 @@ for i in range(X_folds.shape[0]):
 print(results)
 #%%
 
+df = pd.DataFrame([])
+n = int(n_person/k_fold)
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.SCAWI, bias=True, random_state=None)
+df['treino'] = n*[0] + n*[1] # informa se o id_df (identificador do DataFrama X_fold) foi usado para treino ou para teste
+df['id_df'] = list(range(n))*2 # identifacador do DataFrame utilizado de X_fold
+
+df['ELM']  = 0 # coluna dos resultados do ELM comum
+df['MELM'] = 0 # coluna dos resultados do ELM multicamadas
+    
+for i in range(len(results)):
+    aux = np.transpose(results[i])
+    df.iloc[i*n:i*n+n, 2:4] = aux 
 
 
-celm.fit(X_train, y_train)
-
-celm.predict(X_test, y_test)
-
+print(df)    
 
 #%%
 
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=None)
+cmelm = elm.ELMMLPClassifier(activation_func='tanh', func_hidden_layer = af.uniform_random_layer, random_state=10)
 
 
 cmelm.fit(X_train, y_train)

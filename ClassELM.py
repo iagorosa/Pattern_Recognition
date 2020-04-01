@@ -57,7 +57,8 @@ class BaseELM():
         self.H = self.input_to_hidden(X)
         Ht = self.H.T
         
-        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, self.y_bin))
+#        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, self.y_bin))
+        self.beta = np.dot(np.linalg.pinv(self.H), self.y_bin)
         
         return self.beta
         
@@ -102,12 +103,18 @@ class ELMMLPClassifier(BaseELM):
         
 #        self.beta = self._get_beta()
 #        self.H = self._get_H()
+        print("fit")
         super(ELMMLPClassifier, self).fit(X, y)
         
         self.H1 = np.dot(self.y_bin, np.linalg.pinv(self.beta)) 
         self.He = np.concatenate([self.H, np.ones(self.H.shape[0]).reshape(-1, 1)], axis=1)
         
-        H1_inv = af.af_inverse(X, self.activation_func) 
+        print(self.H1)
+        H1_inv = af.af_inverse(self.H1, self.activation_func)  
+        #TODO: Problemas com a aplicacao da funcao inversa
+        print("H1^-1")
+        print(H1_inv)
+        print()
         
         Whe = np.dot(np.linalg.pinv(self.He), H1_inv)
         
@@ -149,7 +156,7 @@ class ELMClassifier(BaseELM):
     def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias = True):
         
         super(ELMClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=bias)
-        
+                
         self.binarizer = binarizer
     
     def get_weights(self):
