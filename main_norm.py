@@ -21,6 +21,8 @@ import ClassELM as elm
 import aux_functions as af
 
 from itertools import product, combinations
+
+from sklearn.preprocessing import LabelBinarizer
         
 #%%
 
@@ -81,13 +83,22 @@ valores = range(int(n_person/k_fold))
 comb =  list(combinations(valores, 3))
 print(comb)
 '''
+func_hidden_layer = af.nguyanatal
+random_state = 10
+activation_func='tanh'
+hidden_layer = 20
 
 
+#clsf.fit(X[:v, 2:], y[:v])
+#clsf.fit(X_train, y_train)
 
-celm = elm.ELMClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, bias=True, random_state=10)
-cmelm = elm.ELMMLPClassifier(activation_func='relu', func_hidden_layer = af.normal_random_layer, random_state=10)
 
-results = [[[], []], [[], []]]
+celm = elm.ELMClassifier(hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state)
+cmelm = elm.ELMMLPClassifier(hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state)
+
+skt_elm = ELMClassifier(hidden_layer, random_state=random_state, activation_func=activation_func, binarizer=LabelBinarizer(0, 1))
+
+results = [[[], [], []], [[], [], []]]
 
 for i in range(X_folds.shape[0]):
     
@@ -109,8 +120,12 @@ for i in range(X_folds.shape[0]):
     cmelm.fit(X_train, y_train)
     r2 = cmelm.predict(X_test, y_test)
     
+    skt_elm.fit(X_train, y_train)
+    r3 = skt_elm.score(X_test, y_test)
+    
     results[0][0].append(r1[0])
     results[0][1].append(r2[0])
+    results[0][2].append(r3)
     
     celm.fit(X_test, y_test)
     r1 = celm.predict(X_train, y_train)
@@ -118,8 +133,12 @@ for i in range(X_folds.shape[0]):
     cmelm.fit(X_test, y_test)
     r2 = cmelm.predict(X_train, y_train)
     
+    skt_elm.fit(X_test, y_test)
+    r3 = skt_elm.score(X_train, y_train)
+    
     results[1][0].append(r1[0])
     results[1][1].append(r2[0])
+    results[1][2].append(r3)
 
 print(results)
 #%%
@@ -132,15 +151,18 @@ df['id_df'] = list(range(n))*2 # identifacador do DataFrame utilizado de X_fold
 
 df['ELM']  = 0 # coluna dos resultados do ELM comum
 df['MELM'] = 0 # coluna dos resultados do ELM multicamadas
+df['SELM'] = 0
     
 for i in range(len(results)):
     aux = np.transpose(results[i])
-    df.iloc[i*n:i*n+n, 2:4] = aux 
+    df.iloc[i*n:i*n+n, 2:5] = aux 
+    
+#%%
 
 
 print(df)    
 
-#%%
+    #%%
 
 cmelm = elm.ELMMLPClassifier(activation_func='tanh', func_hidden_layer = af.uniform_random_layer, random_state=10)
 
@@ -149,4 +171,14 @@ cmelm.fit(X_train, y_train)
 
 cmelm.predict(X_test, y_test)
 
+#%%
+
+celm = elm.ELMClassifier(n_hidden=1000, activation_func='relu', func_hidden_layer = af.uniform_random_layer, random_state=10, regressor='ls_dual', lbd = 0.3, degree = 2)
+
+
+celm.fit(X_train, y_train)
+
+p = celm.predict(X_test, y_test)
+
+print(p[0])
 

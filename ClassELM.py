@@ -16,17 +16,24 @@ from os.path import isfile, join
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
 from sklearn.preprocessing import LabelBinarizer
 
+from sklearn.utils.extmath import safe_sparse_dot
+
 import aux_functions as af
+
+import scipy as sc
 
 #%%
 
 class BaseELM():
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh', random_state=None, bias = True):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh', random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1):
         self.n_hidden = n_hidden
         self.func_hidden_layer = func_hidden_layer
         self.random_state = random_state
         self.activation_func = activation_func
         self.bias = bias
+        self.regressor = regressor
+        self.lbd = lbd
+        self.degree = degree
         
     def create_random_layer(self):
         return self.func_hidden_layer(self.input_lenght, self.n_hidden, self.random_state, self.n_classes)
@@ -45,8 +52,9 @@ class BaseELM():
         
     def fit(self, X, y):
         
-        self.input_lenght = X.shape[1]
         self.y_bin = self.binarizer.fit_transform(y)  
+        
+        self.input_lenght = X.shape[1]
         
         self.n_classes = self.y_bin.shape[1]
         
@@ -58,7 +66,9 @@ class BaseELM():
         Ht = self.H.T
         
 #        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, self.y_bin))
-        self.beta = np.dot(np.linalg.pinv(self.H), self.y_bin)
+#        self.beta = np.dot(np.linalg.pinv(self.H), self.y_bin)
+        
+        self.beta = self._regressor(self.H, self.y_bin)
         
         return self.beta
         
@@ -91,9 +101,33 @@ class BaseELM():
     def _get_H(self):
         return self.H
     
+    def _regressor(self, A, d):
+        
+        if self.regressor ==  None:
+            return np.linalg.solve(A, d )
+        
+        elif self.regressor == 'pinv':
+            return np.dot(np.linalg.pinv(A), d ) #TODO: verificar parametro rcond
+        
+        elif self.regressor == 'ls':
+#            np.linalg.solve(np.dot(A.T, A), np.dot(A.T, d))  #Somar ldb diagonal principal
+            return np.linalg.lstsq(A, d, rcond=None)[0]
+        
+        elif self.regressor == 'ls_dual':
+            self.K = A @ A.T
+            I = np.identity(len(self.K)) # identidade
+            
+            #TODO: preocupacao com bias?
+            self.alpha = np.linalg.solve( self.K ** self.degree + self.lbd * I , d)  #TODO: usei solve comum
+            
+#            print('alpha:', self.alpha.shape, '\nA:', A.shape)
+#            print((self.alpha.T @ A).shape)
+            return (self.alpha.T @ A).T  # Transposto pq na classificacao da incompatibilidade de dimensao
+            
+     
 
 class ELMMLPClassifier(BaseELM):
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, regressor = 'pinv', lbd = 0.01):
         
         super(ELMMLPClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=True)
         
@@ -103,18 +137,18 @@ class ELMMLPClassifier(BaseELM):
         
 #        self.beta = self._get_beta()
 #        self.H = self._get_H()
-        print("fit")
+#        print("fit")
         super(ELMMLPClassifier, self).fit(X, y)
         
         self.H1 = np.dot(self.y_bin, np.linalg.pinv(self.beta)) 
         self.He = np.concatenate([self.H, np.ones(self.H.shape[0]).reshape(-1, 1)], axis=1)
         
-        print(self.H1)
+#        print(self.H1)s
         H1_inv = af.af_inverse(self.H1, self.activation_func)  
         #TODO: Problemas com a aplicacao da funcao inversa
-        print("H1^-1")
-        print(H1_inv)
-        print()
+#        print("H1^-1")
+#        print(H1_inv)
+#        print()
         
         Whe = np.dot(np.linalg.pinv(self.He), H1_inv)
         
@@ -153,9 +187,9 @@ class ELMMLPClassifier(BaseELM):
 
 
 class ELMClassifier(BaseELM):
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias = True):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1):
         
-        super(ELMClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=bias)
+        super(ELMClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=bias, regressor = regressor, degree = degree)
                 
         self.binarizer = binarizer
     
@@ -166,8 +200,25 @@ class ELMClassifier(BaseELM):
         return super(ELMClassifier, self)._get_bias()
     
     def predict(self, X, y):
-        H = self.input_to_hidden(X)
-        y_pred = np.dot(H, self.beta)
+        self.H_test = self.input_to_hidden(X)
+#        y_pred = np.dot(H, self.beta)
+        
+        '''
+        if (self.regressor == 'ls_dual'):
+            y_pred = X @ self.beta
+            
+        else:
+#            y_pred = safe_sparse_dot(H, self.beta)
+            y_pred = self.H_test @ self.beta
+        '''
+            
+        y_pred = self.H_test @ self.beta
+        
+        if self.regressor == 'ls_dual':
+            mat = self.H @ self.H_test.T
+            y_pred = self.alpha.T @ mat ** self.degree
+            y_pred = y_pred.T
+        
         
         return super(ELMClassifier, self).predict(y, y_pred)
         
