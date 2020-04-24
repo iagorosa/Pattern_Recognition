@@ -11,14 +11,15 @@ from PIL import Image as pil
 import numpy as np
 import pandas as pd
 
-mat = scio.loadmat('./dataset/smallNORB/smallNORB-32x32.mat') #leitura de arquivo .mat no python.
-mat_test = scio.loadmat('./dataset/smallNORB/smallNORB-32x32.mat') #leitura de arquivo .mat no python.
+mat = scio.loadmat('./dataset/mnist/mnist.mat') #leitura de arquivo .mat no python.
+mat_test = scio.loadmat('./dataset/mnist/mnist.t.mat') #leitura de arquivo .mat no python.
                                      #Retorna um dicionario com 5 chaves onde  
-m = mat['Z'] # a chave 'Z' no dicionario mat contem uma imagem por linha em um vetor com 32x32=1024 posicoes por imagem 
+m = mat['Z'] # a chave 'Z' no dicionario mat contem uma imagem por linha em um vetor com 32x32=1024 posicoes por imagem m_test
+
 y = mat['y']
 
-m_test = mat['Z']
-y_test = mat['y']
+m_test = mat_test['Z']
+y_test = mat_test['y']
 
 #%%
 

@@ -107,7 +107,8 @@ class BaseELM():
             return np.linalg.solve(A, d )
         
         elif self.regressor == 'pinv':
-            return np.dot(np.linalg.pinv(A), d ) #TODO: verificar parametro rcond
+#            return np.dot(np.linalg.pinv(A), d ) #TODO: verificar parametro rcond
+            return np.dot(sc.linalg.pinv2(A), d )
         
         elif self.regressor == 'ls':
 #            np.linalg.solve(np.dot(A.T, A), np.dot(A.T, d))  #Somar ldb diagonal principal
@@ -216,7 +217,7 @@ class ELMClassifier(BaseELM):
         
         if self.regressor == 'ls_dual':
             mat = self.H @ self.H_test.T
-            y_pred = self.alpha.T @ mat ** self.degree
+            y_pred = self.alpha.T @ (mat ** self.degree)
             y_pred = y_pred.T
         
         

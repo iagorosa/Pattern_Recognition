@@ -23,6 +23,8 @@ import aux_functions as af
 from itertools import product, combinations
 
 from sklearn.preprocessing import LabelBinarizer
+
+import scipy.io as scio
         
 #%%
 
@@ -83,20 +85,20 @@ valores = range(int(n_person/k_fold))
 comb =  list(combinations(valores, 3))
 print(comb)
 '''
-func_hidden_layer = af.nguyanatal
+func_hidden_layer = af.uniform_random_layer
 random_state = 10
 activation_func='tanh'
-hidden_layer = 20
+hidden_layer = 1000
 
 
 #clsf.fit(X[:v, 2:], y[:v])
 #clsf.fit(X_train, y_train)
 
 
-celm = elm.ELMClassifier(hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state)
-cmelm = elm.ELMMLPClassifier(hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state)
+celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls')
+cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor='ls')
 
-skt_elm = ELMClassifier(hidden_layer, random_state=random_state, activation_func=activation_func, binarizer=LabelBinarizer(0, 1))
+skt_elm = ELMClassifier(hidden_layer, random_state=random_state, activation_func=activation_func)
 
 results = [[[], [], []], [[], [], []]]
 
@@ -122,7 +124,7 @@ for i in range(X_folds.shape[0]):
     
     skt_elm.fit(X_train, y_train)
     r3 = skt_elm.score(X_test, y_test)
-    
+#    
     results[0][0].append(r1[0])
     results[0][1].append(r2[0])
     results[0][2].append(r3)
@@ -182,3 +184,34 @@ p = celm.predict(X_test, y_test)
 
 print(p[0])
 
+#%%
+
+func_hidden_layer = af.uniform_random_layer
+random_state = 10
+#activation_func='tanh'
+hidden_layer = 1000
+
+mat = scio.loadmat('./5Train/7.mat')
+
+trainIdx = mat['trainIdx']
+X_train = X[(trainIdx.reshape(1, -1)[0] - 1), :]
+
+testIdx  = mat['testIdx']
+X_test  = X[(testIdx.reshape(1, -1)[0] - 1), :]
+
+y_train = X_train[:, 1]
+X_train = X_train[:, 2:]
+
+y_test = X_test[:, 1]
+X_test = X_test[:, 2:]
+
+
+
+celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls_dual', degree=2, lbd = 5)
+cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor='ls')
+
+
+celm.fit(X_train, y_train)
+r1 = celm.predict(X_test, y_test)
+
+r1[0]
