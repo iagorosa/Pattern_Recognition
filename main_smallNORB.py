@@ -25,6 +25,9 @@ from itertools import product, combinations
 from sklearn.preprocessing import LabelBinarizer
 
 from tensorflow.keras.datasets import mnist
+
+import leitura_geral as lg
+from sklearn.model_selection import train_test_split 
         
 #%%
 
@@ -55,15 +58,25 @@ X_train = X_train / 255.0
 X_test  = X_test / 255.0
 
 #%%
+
+#X = lg.leitura('umist')
+X = lg.leitura('umist').astype('float')
+X[:, 2:] = X[:, 2:] / 255.0
+
+X_train,X_test,y_train,y_test=train_test_split(X[:, 2:],X[:,0],test_size=1.0/3,random_state=None)
+
+pl.hist(y_train)
+pl.hist(y_test)
+#%%
 ######### SETTING
 
-func_hidden_layer = af.uniform_random_layer
+func_hidden_layer = af.nguyanatal
 random_state = 10
 activation_func='tanh'
 n_hidden=1000
 
-celm = elm.ELMClassifier(n_hidden=n_hidden, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor = 'pinv')
-cmelm = elm.ELMMLPClassifier(n_hidden=n_hidden, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor = 'pinv')
+celm = elm.ELMClassifier(n_hidden=n_hidden, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor = 'ls_dual', degree=5, lbd=6)
+cmelm = elm.ELMMLPClassifier(n_hidden=n_hidden, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor = 'pinv')
 
 skt_elm = ELMClassifier(n_hidden=n_hidden, random_state=random_state, activation_func=activation_func, binarizer=LabelBinarizer(0, 1))
 #r2 = 0
@@ -72,7 +85,7 @@ skt_elm = ELMClassifier(n_hidden=n_hidden, random_state=random_state, activation
 
 celm.fit(X_train, y_train)
 cmelm.fit(X_train, y_train)
-skt_elm.fit(X_train, y_train)
+#skt_elm.fit(X_train, y_train)
 
 #%%
 ######### TEST
@@ -80,10 +93,17 @@ skt_elm.fit(X_train, y_train)
 
 r1 = celm.predict(X_test, y_test)[0]
 r2 = cmelm.predict(X_test, y_test)[0]
-r3 = skt_elm.score(X_test, y_test)
+#r3 = skt_elm.score(X_test, y_test)
+r3=0
     
 #%%
 
 print('r1:', r1, '\nr2:', r2, '\nr3:', r3)
 
 #%%
+
+for img0 in X[X[:,1] == 20][:,2:]:
+    print(img0.shape)
+    m0 = img0.reshape(112,92).T
+    img = pil.fromarray(m0, 'L')
+    img.show()

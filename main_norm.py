@@ -28,10 +28,12 @@ import scipy.io as scio
         
 #%%
 
-X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
+#X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
+X = np.loadtxt("./dataset/ORL_32x32.csv", delimiter=',', skiprows=1)
 # col 0: pessoa
 # col 1: label
 
+X[:, 0] = X[:, 0] - 1
 #%%
 
 # Normalização
@@ -39,14 +41,15 @@ X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
 X[:, 2:] = X[:, 2:] / 255.0
 
 
-#%%
+#%%celm.predict(X_test, y_test)
 random_state = None
 n_person  = len(np.unique(X[:, 0])) 
 n_classes = len(np.unique(X[:, 1])) 
 
 np.random.seed(random_state)
 
-v = np.arange(1, n_person+1)
+#v = np.arange(1, n_person+1)
+v = np.arange(n_person)
 CV_random_matrix = np.zeros((n_classes, n_person))
 
 for i in range(n_classes):
@@ -95,13 +98,13 @@ hidden_layer = 1000
 #clsf.fit(X_train, y_train)
 
 
-celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls')
+celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls_dual', degree =3, lbd = 4)
 cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor='ls')
 
-skt_elm = ELMClassifier(hidden_layer, random_state=random_state, activation_func=activation_func)
+skt_elm = ELMClassifier(n_hidden=hidden_layer, random_state=random_state, activation_func=activation_func)
 
 results = [[[], [], []], [[], [], []]]
-
+r3=0
 for i in range(X_folds.shape[0]):
     
     val = list(range(int(n_person/k_fold)))
@@ -110,8 +113,8 @@ for i in range(X_folds.shape[0]):
     X_train = np.concatenate([X_folds[val[0]], X_folds[val[1]]])
     X_test = X_folds[i]
     
-    y_train = X_train[:, 1]
-    y_test  = X_test[:, 1]
+    y_train = X_train[:, 0]
+    y_test  = X_test[:, 0]
     
     X_train = X_train[:, 2:]
     X_test  = X_test[:, 2:]
@@ -122,9 +125,9 @@ for i in range(X_folds.shape[0]):
     cmelm.fit(X_train, y_train)
     r2 = cmelm.predict(X_test, y_test)
     
-    skt_elm.fit(X_train, y_train)
-    r3 = skt_elm.score(X_test, y_test)
-#    
+#    skt_elm.fit(X_train, y_train)
+#    r3 = skt_elm.score(X_test, y_test)
+    
     results[0][0].append(r1[0])
     results[0][1].append(r2[0])
     results[0][2].append(r3)
@@ -135,8 +138,8 @@ for i in range(X_folds.shape[0]):
     cmelm.fit(X_test, y_test)
     r2 = cmelm.predict(X_train, y_train)
     
-    skt_elm.fit(X_test, y_test)
-    r3 = skt_elm.score(X_train, y_train)
+#    skt_elm.fit(X_test, y_test)
+#    r3 = skt_elm.score(X_train, y_train)
     
     results[1][0].append(r1[0])
     results[1][1].append(r2[0])
@@ -186,12 +189,15 @@ print(p[0])
 
 #%%
 
+X[:, 0] = X[:, 0] - 1
+#%%
+
 func_hidden_layer = af.uniform_random_layer
 random_state = 10
 #activation_func='tanh'
 hidden_layer = 1000
 
-mat = scio.loadmat('./5Train/7.mat')
+mat = scio.loadmat('./dataset/5Train_ORL/45.mat')
 
 trainIdx = mat['trainIdx']
 X_train = X[(trainIdx.reshape(1, -1)[0] - 1), :]
@@ -199,15 +205,15 @@ X_train = X[(trainIdx.reshape(1, -1)[0] - 1), :]
 testIdx  = mat['testIdx']
 X_test  = X[(testIdx.reshape(1, -1)[0] - 1), :]
 
-y_train = X_train[:, 1]
+y_train = X_train[:, 0]
 X_train = X_train[:, 2:]
 
-y_test = X_test[:, 1]
+y_test = X_test[:, 0]
 X_test = X_test[:, 2:]
 
 
 
-celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls_dual', degree=2, lbd = 5)
+celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func='sigmoid', func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor='ls')
 cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor='ls')
 
 
