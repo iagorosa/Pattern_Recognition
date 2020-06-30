@@ -28,8 +28,8 @@ import scipy.io as scio
         
 #%%
 
-#X = np.loadtxt("./Yale_32x32.csv", delimiter=',', skiprows=1)
-X = np.loadtxt("./dataset/ORL_32x32.csv", delimiter=',', skiprows=1)
+X = np.loadtxt("./dataset/yale/Yale_32x32.csv", delimiter=',', skiprows=1)
+#X = np.loadtxt("./dataset/ORL_32x32.csv", delimiter=',', skiprows=1)
 # col 0: pessoa
 # col 1: label
 
