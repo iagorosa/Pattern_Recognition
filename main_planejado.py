@@ -26,8 +26,11 @@ db = Databases('yale')
 
 hidden_layer = 1000
 activation_func = 'relu'
-func_hidden_layer = af.normal_random_layer
-random_state = 4
+func_hidden_layer = af.uniform_random_layer
+regressor='pinv'
+degree=3
+lbd=0.5
+random_state = 13
 
 erros_elm  = []
 erros_melm = []
@@ -35,8 +38,8 @@ erros_melm = []
 for i in range(1, 51):
     (X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=7, conf_op=i)
     
-    celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func=activation_func, func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state)
-    cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func=activation_func, func_hidden_layer = func_hidden_layer, random_state= random_state)
+    celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func=activation_func, func_hidden_layer = func_hidden_layer, bias=True, random_state= random_state, regressor=regressor, degree=degree, lbd=lbd)
+    cmelm = elm.ELMMLPClassifier(n_hidden=hidden_layer, activation_func='relu', func_hidden_layer = func_hidden_layer, random_state= random_state, regressor=regressor)
     
     celm.fit(X_test, y_test)
     r1 = celm.predict(X_train, y_train)
