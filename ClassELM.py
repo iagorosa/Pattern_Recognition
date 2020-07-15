@@ -22,10 +22,12 @@ import aux_functions as af
 
 import scipy as sc
 
+from sklearn.preprocessing import Binarizer
+
 #%%
 
 class BaseELM():
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh', random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh', random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1, sparse = False):
         self.n_hidden = n_hidden
         self.func_hidden_layer = func_hidden_layer
         self.random_state = random_state
@@ -34,6 +36,7 @@ class BaseELM():
         self.regressor = regressor
         self.lbd = lbd
         self.degree = degree
+        self.sparse = sparse
         
     def create_random_layer(self):
         return self.func_hidden_layer(self.input_lenght, self.n_hidden, self.random_state, self.n_classes)
@@ -115,22 +118,75 @@ class BaseELM():
             return np.linalg.lstsq(A, d, rcond=None)[0]
         
         elif self.regressor == 'ls_dual':
-            self.K = A @ A.T
-            I = np.identity(len(self.K)) # identidade
             
-            #TODO: preocupacao com bias?
-            self.alpha = np.linalg.solve( self.K ** self.degree + self.lbd * I , d)  #TODO: usei solve comum
-            
-#            print('alpha:', self.alpha.shape, '\nA:', A.shape)
-#            print((self.alpha.T @ A).shape)
-            return (self.alpha.T @ A).T  # Transposto pq na classificacao da incompatibilidade de dimensao
+            if not self.sparse:
+                self.K = A @ A.T
+                
+                I = np.identity(len(self.K)) # identidade
+                
+                #TODO: preocupacao com bias?
+                self.alpha = np.linalg.solve( self.K ** self.degree + self.lbd * I , d)  #TODO: usei solve comum
+                
+    #            print('alpha:', self.alpha.shape, '\nA:', A.shape)
+    #            print((self.alpha.T @ A).shape)
+                return (self.alpha.T @ A).T  # Transposto pq na classificacao da incompatibilidade de dimensao
+            else:
+#                transformer = Binarizer().fit(A)
+#                A_ = transformer.transform(A)
+                
+                #TODO: conferir com Medina
+#                A_ = A**self.degree
+                
+                print("Matriz sparsa:")
+#                A_ = sc.sparse.coo_matrix(A)
+
+                def AAT_mult(x):
+                	return (A.dot( A.T ) ** self.degree).dot(x)
+#                    return A_.dot( A_.T.dot(x) )
+                
+                def I_lbd(x):
+                    return (self.lbd * I).dot(x)
+                
+                def sistema_mult(x):
+#                    return self.K.dot(x) + I.dot(x)
+#                    return (A.dot( A.T ) ** self.degree).dot(x) + (self.lbd * I).dot(x)
+                    return ( (A @ A.T) ** self.degree + self.lbd * I).dot(x)
+                
+                
+#                self.K = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec=AAT_mult)
+                
+                I = sc.sparse.eye(*(A.shape*2)[::2])
+#                I = sc.sparse.linalg.LinearOperator(I.shape, matvec=I_lbd)
+                
+                
+                
+                sistema = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec=sistema_mult)
+                
+                
+                self.d = d
+                
+                self.alpha = np.zeros_like(d, dtype=float)
+                
+                print("\n\nInicio da resolucao dos cgs")
+                for i in range(d.shape[1]):
+                    r, *info = sc.sparse.linalg.cg( sistema , d.T[i])
+                    self.alpha.T[i] = list(r)
+                    print("cg para posicao ", i, " resolvida")
+                    
+
+                result = (self.alpha.T @ A).T 
+                
+#                self.alpha = self.alpha.toarray()
+#                result = result.toarray()
+                
+                return result                
             
      
 
 class ELMMLPClassifier(BaseELM):
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, regressor = 'pinv', lbd = 0.01):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, regressor = 'pinv', lbd = 0.01, sparse = False):
         
-        super(ELMMLPClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=True)
+        super(ELMMLPClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=True, sparse = sparse)
         
         self.binarizer = binarizer
         
@@ -188,9 +244,9 @@ class ELMMLPClassifier(BaseELM):
 
 
 class ELMClassifier(BaseELM):
-    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1):
+    def __init__(self, n_hidden=20, func_hidden_layer = af.normal_random_layer, activation_func='tanh',  binarizer=LabelBinarizer(0, 1), random_state=None, bias = True, regressor = 'pinv', lbd = 0.01, degree = 1, sparse = False):
         
-        super(ELMClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=bias, regressor = regressor, degree = degree)
+        super(ELMClassifier, self).__init__(n_hidden=n_hidden, func_hidden_layer = func_hidden_layer, activation_func=activation_func, random_state=random_state, bias=bias, regressor = regressor, degree = degree, sparse = sparse)
                 
         self.binarizer = binarizer
     
@@ -216,10 +272,27 @@ class ELMClassifier(BaseELM):
         y_pred = self.H_test @ self.beta
         
         if self.regressor == 'ls_dual':
-            mat = self.H @ self.H_test.T
-            y_pred = self.alpha.T @ (mat ** self.degree)
-            y_pred = y_pred.T
         
+            if self.sparse:
+                
+                def mat(X):
+                    return X.T @ ( (self.H @ self.H_test.T)  ** self.degree) 
+                
+                mv = lambda x: x
+                
+                shape = (self.H.shape[0],)*2 
+#                print(shape)
+                y_pred = sc.sparse.linalg.LinearOperator(shape, matmat=mat, matvec=mv)
+                y_pred = y_pred.matmat(self.alpha).T
+#                print("y_pred", y_pred.shape)
+                
+            else:
+                
+                mat = self.H @ self.H_test.T
+                y_pred = self.alpha.T @ (mat ** self.degree)
+                y_pred = y_pred.T
+                print(y_pred.shape)
+                
         
         return super(ELMClassifier, self).predict(y, y_pred)
         
