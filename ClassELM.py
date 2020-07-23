@@ -66,7 +66,7 @@ class BaseELM():
             self.B = self.create_bias()
             
         self.H = self.input_to_hidden(X)
-        Ht = self.H.T
+#        Ht = self.H.T
         
 #        self.beta = np.dot(np.linalg.pinv(np.dot(Ht, self.H)), np.dot(Ht, self.y_bin))
 #        self.beta = np.dot(np.linalg.pinv(self.H), self.y_bin)
@@ -112,10 +112,16 @@ class BaseELM():
         elif self.regressor == 'pinv':
 #            return np.dot(np.linalg.pinv(A), d ) #TODO: verificar parametro rcond
             return np.dot(sc.linalg.pinv2(A), d )
+#            return np.dot( sc.linalg.pinv2(A.T @ A), np.dot(A.T, d) )
         
         elif self.regressor == 'ls':
 #            np.linalg.solve(np.dot(A.T, A), np.dot(A.T, d))  #Somar ldb diagonal principal
             return np.linalg.lstsq(A, d, rcond=None)[0]
+        
+        elif self.regressor == 'ls_reg':
+            I = np.identity(A.shape[1])
+            print('aqui')
+            return np.linalg.solve(np.dot(A.T, A) + self.lbd * I, np.dot(A.T, d)) 
         
         elif self.regressor == 'ls_dual':
             
@@ -137,8 +143,17 @@ class BaseELM():
                 #TODO: conferir com Medina
 #                A_ = A**self.degree
                 
+                A = A.astype('float32')
+                
                 print("Matriz sparsa:")
 #                A_ = sc.sparse.coo_matrix(A)
+
+                def A_X_mult(X):
+#                    return X.T @ ( (self.H @ self.H_test.T)  ** self.degree) 
+                    return A.dot(X.T)
+                
+                
+                A_X = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec = lambda x: x, matmat = A_X_mult, dtype='float32')                
 
                 def AAT_mult(x):
                 	return (A.dot( A.T ) ** self.degree).dot(x)
@@ -148,19 +163,19 @@ class BaseELM():
                     return (self.lbd * I).dot(x)
                 
                 def sistema_mult(x):
-#                    return self.K.dot(x) + I.dot(x)
-#                    return (A.dot( A.T ) ** self.degree).dot(x) + (self.lbd * I).dot(x)
-                    return ( (A @ A.T) ** self.degree + self.lbd * I).dot(x)
+#                    return ( (A @ A.T) ** self.degree + self.lbd * I).dot(x)
+                    return ( A_X.matmat(A) ** self.degree + self.lbd * I).dot(x)
+                
                 
                 
 #                self.K = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec=AAT_mult)
                 
-                I = sc.sparse.eye(*(A.shape*2)[::2])
+                I = sc.sparse.eye(*(A.shape*2)[::2], dtype='int32')
 #                I = sc.sparse.linalg.LinearOperator(I.shape, matvec=I_lbd)
                 
                 
                 
-                sistema = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec=sistema_mult)
+                sistema = sc.sparse.linalg.LinearOperator((A.shape*2)[::2], matvec=sistema_mult, dtype='float32')
                 
                 
                 self.d = d
@@ -170,7 +185,7 @@ class BaseELM():
                 print("\n\nInicio da resolucao dos cgs")
                 for i in range(d.shape[1]):
                     r, *info = sc.sparse.linalg.cg( sistema , d.T[i])
-                    self.alpha.T[i] = list(r)
+                    self.alpha.T[i] = r
                     print("cg para posicao ", i, " resolvida")
                     
 

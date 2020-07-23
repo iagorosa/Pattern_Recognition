@@ -72,9 +72,14 @@ class Databases():
             m_test = mat_test['Z']
             y_test = mat_test['y']
             
-            self.X_train = np.concatenate([y, m], axis=1).astype('uint8')
-            self.X_test = np.concatenate([y_test, m_test], axis=1).astype('uint8') 
-
+#            self.X_train = np.concatenate([y, m], axis=1).astype('uint8')
+#            self.X_test = np.concatenate([y_test, m_test], axis=1).astype('uint8') 
+            
+            self.X_train = m
+            self.y_train = y
+            
+            self.X_test = m_test
+            self.y_test = y_test
 
        
         '''
