@@ -6,6 +6,7 @@ Created on Tue Jun 30 16:33:36 2020
 @author: iagorosa
 """
 
+'''
 from leitura_geral import Databases
 import ClassELM as elm
 import aux_functions as af
@@ -18,7 +19,7 @@ from sklearn.preprocessing import Binarizer
 
 db = Databases('yale')
 (X_train, y_train), (X_test, y_test) = db.load_train_test()
-celm = elm.ELMClassifier(n_hidden=1000, activation_func= 'relu',  func_hidden_layer =  af.uniform_random_layer, bias=True, random_state= 10, degree=2, regressor='ls_reg', sparse=False, lbd=1)
+celm = elm.ELMClassifier(n_hidden=1000, activation_func= 'relu',  func_hidden_layer =  af.uniform_random_layer, bias=True, random_state= 10, degree=2, regressor='ls_dual', sparse=False, lbd=0.5)
 #
 #
 #transformer = Binarizer().fit(X_train)
@@ -35,6 +36,7 @@ t1 = celm.predict(X_train, y_train)
 r1 = celm.predict(X_test, y_test)
 
 print(t1[0], r1[0])
+'''
 
 
 #%%
@@ -47,6 +49,7 @@ import pandas as pd
 
 df = pd.DataFrame([])
 
+base_names = ['yale', 'orl', 'MNIST', 'smallnorb']
 #base_names = ['yale', 'orl']
 #base_names = ['MNIST']
 base_names = ['smallnorb']

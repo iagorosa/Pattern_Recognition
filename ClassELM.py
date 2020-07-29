@@ -126,6 +126,10 @@ class BaseELM():
         elif self.regressor == 'ls_dual':
             
             if not self.sparse:
+                
+                '''
+                FORMA ABAIXO FOI CONSTRUIDA PELO RAUL. PORÉM, PARECE QUE ESTA ERRADA
+                
                 self.K = A @ A.T
                 
                 I = np.identity(len(self.K)) # identidade
@@ -136,6 +140,28 @@ class BaseELM():
     #            print('alpha:', self.alpha.shape, '\nA:', A.shape)
     #            print((self.alpha.T @ A).shape)
                 return (self.alpha.T @ A).T  # Transposto pq na classificacao da incompatibilidade de dimensao
+                '''
+                
+                if self.degree == 1:
+                    self.regressor = 'pinv'
+                    return self._regressor(A, d)
+                
+                self.K = A.T @ A + 1
+                
+                I = np.identity(len(self.K))
+                
+                
+                # Assim nao da pra calcular o beta. As dimensoes nao batem
+#                self.alpha = np.linalg.solve( self.K ** self.degree + self.lbd * I , d)
+#                return self.alpha @ A.T                
+                
+                self.beta = np.linalg.solve(self.K ** self.degree + self.lbd * I, np.dot(A.T, d))
+                
+                self.alpha = sc.linalg.pinv2(A.T) @ self.beta 
+                
+                return self.beta
+            
+            
             else:
 #                transformer = Binarizer().fit(A)
 #                A_ = transformer.transform(A)
@@ -286,7 +312,7 @@ class ELMClassifier(BaseELM):
             
         y_pred = self.H_test @ self.beta
         
-        if self.regressor == 'ls_dual':
+        if self.regressor == 'ls_dual': # False apenas para um teste onde essa parte nao acontece
         
             if self.sparse:
                 
@@ -303,10 +329,14 @@ class ELMClassifier(BaseELM):
                 
             else:
                 
+                
                 mat = self.H @ self.H_test.T
+#                mat = self.H.T @ self.H_test
                 y_pred = self.alpha.T @ (mat ** self.degree)
                 y_pred = y_pred.T
                 print(y_pred.shape)
+                
+                pass
                 
         
         return super(ELMClassifier, self).predict(y, y_pred)
