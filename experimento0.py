@@ -6,7 +6,7 @@ Created on Tue Jun 30 16:33:36 2020
 @author: iagorosa
 """
 
-'''
+
 from leitura_geral import Databases
 import ClassELM as elm
 import aux_functions as af
@@ -16,10 +16,10 @@ import pandas as pd
 from sklearn.preprocessing import Binarizer
 
 
-
-db = Databases('yale')
-(X_train, y_train), (X_test, y_test) = db.load_train_test()
-celm = elm.ELMClassifier(n_hidden=1000, activation_func= 'relu',  func_hidden_layer =  af.uniform_random_layer, bias=True, random_state= 10, degree=2, regressor='ls_dual', sparse=False, lbd=0.5)
+'''
+db = Databases('YaleB')
+(X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=40)
+celm = elm.ELMClassifier(n_hidden=1000, activation_func= 'relu',  func_hidden_layer =  af.uniform_random_layer, bias=True, random_state= 10, degree=2, regressor='ls_dual', sparse=False, lbd=0.2)
 #
 #
 #transformer = Binarizer().fit(X_train)
@@ -39,6 +39,7 @@ print(t1[0], r1[0])
 '''
 
 
+
 #%%
 
 from leitura_geral import Databases
@@ -49,16 +50,16 @@ import pandas as pd
 
 df = pd.DataFrame([])
 
-base_names = ['yale', 'orl', 'MNIST', 'smallnorb']
+#base_names = ['yale', 'orl', 'MNIST', 'smallnorb']
 #base_names = ['yale', 'orl']
-#base_names = ['MNIST']
-base_names = ['smallnorb']
+base_names = ['YaleB']
+#base_names = ['smallnorb']
 opt_act_func = ['relu', 'sigmoid', 'tanh']
 #opt_act_func = ['relu']
 opt_func_hidden_layer = [af.uniform_random_layer, af.normal_random_layer, af.SCAWI, af.nguyanatal]
 #opt_regressor = ['ls', 'pinv', 'ls_dual'] 
-#opt_regressor = ['pinv', 'ls_dual'] 
-opt_regressor = ['ls_dual'] 
+opt_regressor = ['pinv', 'ls_dual'] 
+#opt_regressor = ['ls_dual'] 
 
 
 hidden_layer = 1000
@@ -74,7 +75,7 @@ random_state = 13
 
 for name in base_names:
     db = Databases(name)
-    (X_train, y_train), (X_test, y_test) = db.load_train_test()
+#    (X_train, y_train), (X_test, y_test) = db.load_train_test()
     
     for oaf in opt_act_func:
         
@@ -93,11 +94,11 @@ for name in base_names:
                 for i in range(1, 51):
                     print("\rTeste {}/50".format(i), end="\r")
                     
-#                    (X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=7, conf_op=i)
+                    (X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=40, conf_op=i)
                     
                     try:
 #                        celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func=oaf, func_hidden_layer = ofhl, bias=True, random_state= random_state, regressor=reg, degree=degree, lbd=lbd)
-                        celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func=oaf, func_hidden_layer = ofhl, bias=True, random_state= i, regressor=reg, sparse=True, degree=degree, lbd=lbd)
+                        celm = elm.ELMClassifier(n_hidden=hidden_layer, activation_func=oaf, func_hidden_layer = ofhl, bias=True, random_state= i, regressor=reg, sparse=False, degree=degree, lbd=lbd)
                         
                         celm.fit(X_train, y_train)
                         
@@ -163,7 +164,7 @@ for name in base_names:
                     df = pd.DataFrame(columns=list(dict_aux.keys()))
                 df = df.append(dict_aux, ignore_index=True)
 
-df.to_csv("smallnorb_completo.csv")
+df.to_csv("yaleb_new.csv")
 
 #print("Media erro ELM:", media_erro_elm)
 #print("Desvio padrao do erro ELM:", devpad_elm)

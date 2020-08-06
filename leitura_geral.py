@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 import sys
 
 # Nome das bases de dados disponíveis 
-databases = ['Yale', 'ORL', 'UMist', 'GTface', 'PIE', 'Letter', 'Shuttle', 'USPS', 'MNIST', "smallNORB"]
+databases = ['Yale', 'ORL', 'UMist', 'GTface', 'PIE', 'Letter', 'Shuttle', 'USPS', 'MNIST', "smallNORB", 'YaleB']
     
 # Classe para trabalhar com leitura e carregamento das bases de dados
 class Databases():
@@ -45,13 +45,18 @@ class Databases():
             return
                         
             
-        if db in [x.lower() for x in ['yale', 'orl']]:
+        if db in [x.lower() for x in ['yale', 'orl', 'yaleb']]:
             mat = scio.loadmat('./dataset/'+db+'/'+db+'_32x32'+'.mat')
     
             m = mat['fea'] # a chave 'fea' no dicionario mat contem uma imagem por linha em um vetor com 32x32=1024 posicoes por imagem 
             p = mat['gnd']
             
-            label = np.array(list(range(len(p[p==1])))*p[-1][0]).reshape(m.shape[0],1)
+            print(mat)
+            
+            try:
+                label = np.array(list(range(len(p[p==1])))*p[-1][0]).reshape(m.shape[0],1)
+            except:
+                label = p
         
             p = p - 1
             
@@ -123,13 +128,13 @@ class Databases():
             if self.database_name.lower()  == 'MNIST'.lower():
                 pass
         
-            elif self.database_name.lower() in [x.lower() for x in ['Yale', 'ORL']]:
+            elif self.database_name.lower() in [x.lower() for x in ['Yale', 'ORL', 'YaleB']]:
                 
                 
                 try:
-                    mat = scio.loadmat('./dataset/'+self.database_name+'/pTrain/'+str(pTrain)+'Train/'+str(conf_op)+'.mat')
+                    mat = scio.loadmat('./dataset/'+self.database_name.lower()+'/pTrain/'+str(pTrain)+'Train/'+str(conf_op)+'.mat')
                 except:
-                    print('A pasta '+str(pTrain)+'Train ou o \'arquivo' + str(conf_op)+'.mat\'' + ' nao disponivel.')
+                    print('A pasta '+str(pTrain)+'Train ou o \'arquivo ' + str(conf_op)+'.mat\'' + ' nao disponivel.')
                     sys.exit()
                     
                 trainIdx = mat['trainIdx']

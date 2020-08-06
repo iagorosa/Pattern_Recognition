@@ -127,10 +127,10 @@ class BaseELM():
             
             if not self.sparse:
                 
-                '''
-                FORMA ABAIXO FOI CONSTRUIDA PELO RAUL. PORÉM, PARECE QUE ESTA ERRADA
                 
-                self.K = A @ A.T
+#                FORMA ABAIXO FOI CONSTRUIDA PELO RAUL. PORÉM, PARECE QUE ESTA ERRADA
+                
+                self.K = (A @ A.T) + 1
                 
                 I = np.identity(len(self.K)) # identidade
                 
@@ -160,6 +160,7 @@ class BaseELM():
                 self.alpha = sc.linalg.pinv2(A.T) @ self.beta 
                 
                 return self.beta
+                '''
             
             
             else:
@@ -330,13 +331,13 @@ class ELMClassifier(BaseELM):
             else:
                 
                 
-                mat = self.H @ self.H_test.T
+                mat = (self.H @ self.H_test.T) + 1
 #                mat = self.H.T @ self.H_test
                 y_pred = self.alpha.T @ (mat ** self.degree)
                 y_pred = y_pred.T
-                print(y_pred.shape)
+#                print(y_pred.shape)
                 
-                pass
+#                pass
                 
         
         return super(ELMClassifier, self).predict(y, y_pred)
