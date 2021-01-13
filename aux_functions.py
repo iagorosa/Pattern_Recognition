@@ -5,6 +5,11 @@ Created on Tue Mar 10 09:48:57 2020
 
 @author: iagorosa
 """
+
+'''
+Funções auxiliares necessárias para o processo do ELM.
+São usadas principalmente na calsse do ELM.
+'''
    
 import numpy as np
 import scipy as sc
@@ -52,16 +57,12 @@ def f_activation(x, activaction_func):
     if activaction_func == 'relu':
         return np.maximum(x, 0, x) 
     if activaction_func == 'tanh':
-#        print('velho')
-#        print(x)
-#        print(x.max(), x.min())
         x = np.tanh(x)
-#        print('novo:\n')
-#        print(x)
         return x
     if activaction_func == 'sigmoid':
         return sc.special.expit(x)
-    
+
+# ELM Multilayer
 def inverse_ReLU(x):
     xx = np.where(x > 0, x, 0)
     pos = np.where(x <= 0, 1, 0)

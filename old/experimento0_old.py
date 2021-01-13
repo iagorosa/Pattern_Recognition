@@ -16,8 +16,8 @@ import pandas as pd
 from sklearn.preprocessing import Binarizer
 
 
-'''
-db = Databases('YaleB')
+
+db = Databases('yaleb')
 (X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=40)
 celm = elm.ELMClassifier(n_hidden=1000, activation_func= 'relu',  func_hidden_layer =  af.uniform_random_layer, bias=True, random_state= 10, degree=2, regressor='ls_dual', sparse=False, lbd=0.2)
 #
@@ -36,7 +36,10 @@ t1 = celm.predict(X_train, y_train)
 r1 = celm.predict(X_test, y_test)
 
 print(t1[0], r1[0])
-'''
+
+Xshape = X_test.shape[0] + X_train.shape[0]
+print("X shape", Xshape)
+print("X_train / X_shape", X_train.shape[0] / Xshape)
 
 
 

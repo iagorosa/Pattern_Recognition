@@ -15,6 +15,16 @@ from itertools import chain
 from sklearn.model_selection import train_test_split 
 import sys
 
+'''
+    Aqui existem várias implementações de leitura dos dados disponiveis. 
+    Quando o arquivo está em formato do matlab, está com extensão .mat e usa-se a biblioteca do scipy para conseguir realizar a leitura.
+    Algumas bases são apenas carregadas de bibliotecas especificas
+    O método load_train_test faz o carregamento dos dados em treino e teste. A forma de fazê-lo depende das possibilidades da base de dados. 
+        O parâmetro load_type controla essa forma de fazer a leitura. Para as bases 'Yale', 'ORL', 'YaleB', a load_type = 'standard' executa a leitura usando a pasta 'pTrain' que trás as combinações possíveis para p imagens de cada pessoa como treino. Quando load_type = 'fold', escolhe-se uma determinada quantidade de humor por pessoa. 
+    Para utilizar, basta instanciar a classe usando o nome da base de dados e depois carregar a parte de treino e teste conforme queira.
+    
+'''
+
 # Nome das bases de dados disponíveis 
 databases = ['Yale', 'ORL', 'UMist', 'GTface', 'PIE', 'Letter', 'Shuttle', 'USPS', 'MNIST', "smallNORB", 'YaleB']
     
@@ -114,11 +124,11 @@ class Databases():
     
             
     def load_train_test(self, pTrain = 2, conf_op = 1, pad = 'max', test_size=1.0/3, random_state=None, load_type="standard", k_fold=5, train_folds=[0]):
-        # Quando o loaf_type == "standard", precisamos dos parâmetros
+        # Quando o load_type == "standard", precisamos dos parâmetros
         # pTrain: Subset aleatório com p=(2,3,...,n) imagens por individuo rotuladas para formar o conjunto de treinamento e o restante é considerado para o conjnto de teste. Para cada p, existem 50 divisões aleátorias (conf_op)
         # conf_op: configuração aleatória dentro de um pTrain. Os valores são de 1 atá 50. 
         
-        # Quando o loaf_type == "folds", precisamos dos parâmetros
+        # Quando o load_type == "folds", precisamos dos parâmetros
         # k_fold: quantidade de separação uniforme que acontecerá na base de dados
         # train_folds: lista de quais pedaços da separação ocorrida por k_folds serão utilizadas para o treinamento.
         
