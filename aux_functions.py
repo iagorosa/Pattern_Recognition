@@ -3,7 +3,7 @@
 """
 Created on Tue Mar 10 09:48:57 2020
 
-@author: iagorosa
+@author: iagorosa, ruanmedina
 """
 
 '''

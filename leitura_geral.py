@@ -3,7 +3,7 @@
 """
 Created on Sat Apr 25 00:58:17 2020
 
-@author: iagorosa
+@author: iagorosa, ruanmedina
 """
 
 import scipy.io as scio

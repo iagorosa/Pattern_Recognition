@@ -3,7 +3,7 @@
 """
 Created on Tue Jun 30 16:33:36 2020
 
-@author: iagorosa
+@author: iagorosa, ruanmedina
 """
 
 
@@ -26,13 +26,13 @@ degree=2
 lbd=0.2
 random_state = 13
 
-
+qtd_comb = 50 # este parametro controla a quantidade de configurações de imagens que serao escolhidas dentro de cada pasta pTrain. O padraão é escolher sempre todas as 50 combinações da pasta.
 
 
 for name in base_names:
     db = Databases(name)
-#    (X_train, y_train), (X_test, y_test) = db.load_train_test()
-    pTrain = 40 if name.lower() == 'yaleb' else 7
+
+    pTrain = 40 if name.lower() == 'yaleb' else 7 # A confiração de pTrain (p padrões ou humores por pessoa para treino) para Yale e ORL foi 7, onde ~64% da base da Yale e 70% da base da ORL ficaram para treinamento. Já para a base Yale B, foram utilizaos pTrain = 40, totalizando ~62% das informaçoes da base para treinamento.
     
     for oaf in opt_act_func:
         
@@ -48,7 +48,7 @@ for name in base_names:
                 conf = {"nome_database": name, "activaction_func": oaf, "func_hidden_layer": ofhl.__name__, "regressor": reg}
                 print("Iniciando as configurações {1}, {2} e {3} para a base {0}".format(*conf.values()) )
                 
-                for i in range(1, 51):
+                for i in range(1, qtd_comb):
                     print("\rTeste {}/50".format(i), end="\r")
                     
                     (X_train, y_train), (X_test, y_test) = db.load_train_test(pTrain=pTrain, conf_op=i)
